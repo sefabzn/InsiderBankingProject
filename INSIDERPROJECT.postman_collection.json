@@ -28,7 +28,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n        \"username\": \"alice\",\n        \"email\": \"alice@example.com\",\n        \"password\": \"password123\",\n        \"role\": \"admin\" \n    }",
+					"raw": "{\n        \"username\": \"registeradminuser\",\n        \"email\": \"registeradminuser@example.com\",\n        \"password\": \"password123\",\n        \"role\": \"admin\" \n    }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -71,7 +71,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": " {\n       \"email\": \"bob@example.com\",\n        \"password\": \"password123\"\n}",
+					"raw": " {\n       \"email\": \"admin@example.com\",\n        \"password\": \"password123\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -360,7 +360,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\r\n    \"amount\": 100.00,\r\n    \"currency\":\"USD\"\r\n}",
+					"raw": "{\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440002\",\r\n    \"amount\": 100.00,\r\n    \"currency\":\"USD\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
