@@ -43,13 +43,24 @@ git clone <your-repo-url>
 cd InsiderProject2
 ```
 
-### Step 2: Environment Setup
+### Step 2: Environment Setup (optional)
 ```bash
 # Copy and configure environment (optional - defaults will work)
 cp .env.example .env  # If you have this file
+# EXAMPLE .ENV FILE
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_URL` | `postgres://postgres:postgres@db:5432/banking_sim?sslmode=disable` | PostgreSQL connection string |
+| `JWT_SECRET` | `your-super-secret-jwt-key-change-in-production` | JWT signing secret |
+| `PORT` | `8080` | Application port |
+| `ENV` | `dev` | Environment (dev/prod) |
+| `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
+
+# EXAMPLE .ENV FILE
 ```
 
-### Step 3: Launch All Services
+### Step 3: Launch All Services (RECOMMENDED)
 ```bash
 #make a build (optional)
 docker-compose -f docker-compose.dev.yml build
@@ -229,7 +240,7 @@ The system uses **9 migration files** creating these core tables:
 |--------|----------|-------------|---------------|
 | `GET` | `/balances/current` | Get current balance | ✅ |
 | `GET` | `/balances/historical` | Get balance history | ✅ |
-| `GET` | `/balances/at-time?timestamp=...` | Get balance at specific time | ✅ |
+| `GET` | `/balances/at-time?timestamp=...` | Get balance at specific time | ✅ | (#IMPORTANT NOTE = the timestamp might be gmt + 0)
 
 ### 💸 Transaction Endpoints
 
@@ -258,7 +269,7 @@ The system uses **9 migration files** creating these core tables:
 | `GET` | `/healthz` | Health check | ❌ |
 | `GET` | `/metrics` | Prometheus metrics | ❌ |
 | `GET` | `/metrics/basic` | Basic metrics (JSON) | ❌ |
-| `GET` | `/api/v1/metrics/circuit-breakers` | Circuit breaker status | ❌ |
+| `GET` | `/metrics/circuit-breakers` | Circuit breaker status | ❌ |
 
 ---
 
@@ -268,7 +279,7 @@ The system uses **9 migration files** creating these core tables:
 1. Open Postman
 2. Import `INSIDERPROJECT.postman_collection.json`
 3. Set environment variable:
-   - `base_url` = `http://localhost:8080`
+   - `base_url` = `http://localhost:8080/api/v1`
 
 ### Test Flow Example
 
@@ -495,27 +506,6 @@ curl http://localhost:8080/api/v1/metrics/circuit-breakers
 
 ---
 
-## 🎯 Next Steps
-
-### For Development
-1. **Explore the API** using Postman collection
-2. **Monitor Performance** via Grafana dashboards
-3. **Trace Requests** using Jaeger
-4. **Review Logs** for debugging and insights
-
-### For Production
-1. **Security Hardening** - Change default secrets, configure TLS
-2. **Scaling** - Add more app replicas, configure load balancing
-3. **Backup Strategy** - Set up automated database backups
-4. **Monitoring Alerts** - Configure alerting rules in Prometheus
-
-### Advanced Features to Explore
-- **Event Sourcing** - Review the events table and projector workers
-- **Scheduled Transactions** - Create and monitor future transactions
-- **Multi-Currency** - Test with different currencies
-- **Audit Trails** - Review complete operation history
-
----
 
 **🎉 Your Go Banking Simulation API is now fully operational!**
 
