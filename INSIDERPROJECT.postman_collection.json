@@ -1,0 +1,742 @@
+{
+	"info": {
+		"_postman_id": "2719580a-04ad-4ad7-9164-f2dc1d815466",
+		"name": "INSIDERPROJECT",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "15513224"
+	},
+	"item": [
+		{
+			"name": "register",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"    pm.environment.set(\"accessToken\", jsonData.access_token);",
+							"    pm.environment.set(\"refreshToken\", jsonData.refresh_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n        \"username\": \"alice\",\n        \"email\": \"alice@example.com\",\n        \"password\": \"password123\",\n        \"role\": \"admin\" \n    }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/auth/register",
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"    pm.environment.set(\"accessToken\", jsonData.access_token);\r",
+							"    pm.environment.set(\"refreshToken\", jsonData.refresh_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": " {\n       \"email\": \"bob@example.com\",\n        \"password\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/auth/login",
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "refresh",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"    pm.environment.set(\"accessToken\", jsonData.access_token);\r",
+							"    pm.environment.set(\"refreshToken\", jsonData.refresh_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"  if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDEyOGYzMTYtYzgxNS00ZDU2LWI0MTAtN2YzZTU2MmY1NzZmIiwidXNlcm5hbWUiOiJzZWZhIiwiZW1haWwiOiJzZWZhQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwidHlwZSI6InJlZnJlc2giLCJpc3MiOiJnby1iYW5raW5nLXNpbSIsInN1YiI6ImQxMjhmMzE2LWM4MTUtNGQ1Ni1iNDEwLTdmM2U1NjJmNTc2ZiIsImF1ZCI6WyJnby1iYW5raW5nLXNpbSJdLCJleHAiOjE3NTY4OTM1NTQsIm5iZiI6MTc1NjI4ODc1NCwiaWF0IjoxNzU2Mjg4NzU0LCJqdGkiOiI3ZDNlYWNkNS03YjE0LTQ5ZmUtOTE4ZC00YzY4NmJmYTM1MTMifQ.q9WlCwxWu7I6brcb-sIhlZMSGhxMCibCbEPKPnw85oE\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/auth/refresh",
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "Get current balance",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"  if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{base_url}}/balances/current",
+				"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+			},
+			"response": []
+		},
+		{
+			"name": "GetBalanceHistory",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": "{{base_url}}/balances/historical"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Balance at Specific Time",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/balances/at-time?timestamp=2025-08-28T12:08:05Z",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"balances",
+						"at-time"
+					],
+					"query": [
+						{
+							"key": "timestamp",
+							"value": "2025-08-28T12:08:05Z"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Credit Transaction",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"amount\": 500.00,\r\n    \"currency\": \"USD\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/transactions/credit"
+			},
+			"response": []
+		},
+		{
+			"name": "Debit Transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"amount\": 100.00,\r\n    \"currency\": \"USD\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/transactions/debit"
+			},
+			"response": []
+		},
+		{
+			"name": "Transfer Transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\r\n    \"amount\": 100.00,\r\n    \"currency\":\"USD\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/transactions/transfer"
+			},
+			"response": []
+		},
+		{
+			"name": "Rollback Transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": "{{base_url}}/transactions/{{TransactionIdToRollBack}}/rollback"
+			},
+			"response": []
+		},
+		{
+			"name": "Schedule Transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"  if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"transaction_type\": \"transfer\",\r\n    \"amount\": 25.00,\r\n    \"currency\": \"USD\",\r\n    \"description\": \"Monthly allowance\",\r\n    \"schedule_type\": \"once\",\r\n    \"execute_at\": \"2025-08-28T12:44:15Z\",\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440002\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/scheduled-transactions"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Scheduled Transactions",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"  if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{base_url}}/scheduled-transactions"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Transaction History",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{base_url}}/transactions/history"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Individual Transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwidHlwZSI6ImFjY2VzcyIsImlzcyI6ImdvLWJhbmtpbmctc2ltIiwic3ViIjoiY2RhY2JhODMtMTA0NS00ZDIwLWJhN2UtOTM0MmJjOGNiYzUzIiwiYXVkIjpbImdvLWJhbmtpbmctc2ltIl0sImV4cCI6MTc1NjIzMTQ3MCwibmJmIjoxNzU2MjMwNTcwLCJpYXQiOjE3NTYyMzA1NzAsImp0aSI6ImYwZjllNzA2LTEzNDAtNGIwMi1hMDkyLWVjYTM3YzYyNTUwYiJ9.1oX1xVl_1nORMVJgeOLlFSVHETdVIY98PX11DSmxiHo",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": "{{base_url}}/transactions/{{TransactionId}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Users (Admin)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users?limit=12",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "12"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"selina\",\r\n    \"email\": \"selina@example.com\",\r\n    \"role\": \"admin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{base_url}}/users/{{idToUpdateUser}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": "{{base_url}}/users/{{idToDelete}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get User",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (pm.environment.get(\"accessToken\")) {\r",
+							"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+							"    }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{base_url}}/users/{{IdToGet}}"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Application Metrics",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "{{base_url}}/metrics/basic"
+			},
+			"response": []
+		},
+		{
+			"name": "healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/healthz"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Prometheus metrics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:8080/metrics"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://99318cc5-f2db-4208-ad3a-d1964e768001.mock.pstmn.io"
+		},
+		{
+			"key": "idToDelete",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "IdToGet",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "specified-time",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "TransactionIdToRollBack",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "TransactionId",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "idToUpdateUser",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

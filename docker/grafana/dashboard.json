@@ -1,0 +1,175 @@
+{
+  "title": "Banking Simulation Overview",
+  "description": "Monitor your banking simulation application performance and metrics",
+  "tags": ["banking", "simulation", "go"],
+  "timezone": "UTC",
+  "panels": [
+      {
+        "title": "HTTP Request Rate",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "targets": [
+          {
+            "expr": "rate(banking_http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          { "format": "reqps", "label": "Requests per second" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "HTTP Response Status Codes",
+        "type": "bargauge",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "targets": [
+          {
+            "expr": "sum(increase(banking_http_requests_total[5m])) by (status_code)",
+            "legendFormat": "{{status_code}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "title": "Transaction Processing Rate",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+        "targets": [
+          {
+            "expr": "rate(banking_transactions_processed_total[5m])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "red", "value": 10 }
+              ]
+            },
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "title": "Transaction Queue Depth",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+        "targets": [
+          {
+            "expr": "banking_transaction_queue_depth",
+            "legendFormat": "Queue Depth",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          { "format": "short", "label": "Items in Queue" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Active Goroutines",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+        "targets": [
+          {
+            "expr": "banking_goroutines_active",
+            "legendFormat": "Goroutines",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          { "format": "short", "label": "Count" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "HTTP Request Duration (95th percentile)",
+        "type": "graph",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(banking_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          { "format": "s", "label": "Duration (seconds)" },
+          { "format": "short" }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+        "targets": [
+          {
+            "expr": "rate(banking_http_requests_total{status_code=~\"5..\"}[5m]) / rate(banking_http_requests_total[5m]) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "color": "green", "value": null },
+                { "color": "orange", "value": 1 },
+                { "color": "red", "value": 5 }
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "title": "Total Transactions Processed",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+        "targets": [
+          {
+            "expr": "banking_transactions_processed_total",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "unit": "locale"
+          }
+        }
+      },
+      {
+        "title": "Application Uptime",
+        "type": "stat",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+        "targets": [
+          {
+            "expr": "banking_uptime_seconds / 3600",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "unit": "h"
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+}
