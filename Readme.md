@@ -51,6 +51,8 @@ cp .env.example .env  # If you have this file
 
 ### Step 3: Launch All Services
 ```bash
+#make a build (optional)
+docker-compose -f docker-compose.dev.yml build
 # Start all services (PostgreSQL, Redis, App, Nginx, Monitoring)
 docker compose -f docker-compose.dev.yml up -d
 ```
@@ -81,7 +83,7 @@ docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim
 ### Step 6: Seed Initial Data (Optional)
 ```bash
 # Load seed data
-docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim -f /scripts/seed.sql
+docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim -f /seed.sql
 ```
 
 ### Step 7: Verify API is Working
