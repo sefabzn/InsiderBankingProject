@@ -12,7 +12,9 @@ import (
 type TokenType string
 
 const (
-	AccessToken  TokenType = "access"
+	// AccessToken represents access token type
+	AccessToken TokenType = "access"
+	// RefreshToken represents refresh token type
 	RefreshToken TokenType = "refresh"
 )
 
@@ -159,7 +161,7 @@ func (m *JWTManager) GetUserFromToken(tokenString string) (*Claims, error) {
 // IsTokenExpired checks if a token is expired without validating signature.
 // This is useful for determining if a token needs refresh.
 func (m *JWTManager) IsTokenExpired(tokenString string) bool {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(_ *jwt.Token) (interface{}, error) {
 		return m.secretKey, nil
 	})
 

@@ -46,11 +46,17 @@ type BalanceHistoryItem struct {
 type Currency string
 
 const (
+	// CurrencyUSD represents US Dollar currency
 	CurrencyUSD Currency = "USD"
+	// CurrencyEUR represents Euro currency
 	CurrencyEUR Currency = "EUR"
+	// CurrencyGBP represents British Pound currency
 	CurrencyGBP Currency = "GBP"
+	// CurrencyJPY represents Japanese Yen currency
 	CurrencyJPY Currency = "JPY"
+	// CurrencyCAD represents Canadian Dollar currency
 	CurrencyCAD Currency = "CAD"
+	// CurrencyAUD represents Australian Dollar currency
 	CurrencyAUD Currency = "AUD"
 )
 

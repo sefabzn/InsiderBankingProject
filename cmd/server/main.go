@@ -142,7 +142,11 @@ func main() {
 	if err != nil {
 		utils.Warn("failed to connect to Redis, running without cache", slog.String("error", err.Error()))
 	} else {
-		defer redisClient.Close()
+		defer func() {
+			if err := redisClient.Close(); err != nil {
+				utils.Warn("failed to close Redis client", slog.String("error", err.Error()))
+			}
+		}()
 	}
 
 	// Initialize repositories (if database is available)
@@ -200,17 +204,17 @@ func main() {
 	}
 
 	// Initialize worker pool for async transaction processing
-	var workerPool *worker.WorkerPool
+	var pool *worker.Pool
 	var jobQueue *worker.JobQueue
 	if repos != nil && services != nil {
 		jobQueue = worker.NewJobQueue(100) // Buffer size of 100 jobs
 
 		// Create an adapter that implements the worker's TransactionService interface
 		adapter := &transactionServiceAdapter{service: services.Transaction}
-		workerPool = worker.NewWorkerPool(jobQueue, adapter)
+		pool = worker.NewPool(jobQueue, adapter)
 
 		// Set the worker pool on the transaction service to enable job submission
-		services.Transaction.SetWorkerPool(workerPool)
+		services.Transaction.SetPool(pool)
 
 		// Set metrics collector on transaction service for tracking transaction counts
 		services.Transaction.SetMetricsCollector(metricsCollector)
@@ -235,22 +239,25 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Add health endpoint
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	// Add Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Add basic metrics endpoint (JSON format)
-	mux.HandleFunc("/api/v1/metrics/basic", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/metrics/basic", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
 		metrics := metricsCollector.GetMetrics()
-		json.NewEncoder(w).Encode(metrics)
+		if err := json.NewEncoder(w).Encode(metrics); err != nil {
+			http.Error(w, "Failed to encode metrics", http.StatusInternalServerError)
+			return
+		}
 	})
 
 	// Add circuit breaker metrics endpoint
@@ -279,8 +286,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start worker pool if available
-	if workerPool != nil {
-		workerPool.Start(5) // Start with 5 workers
+	if pool != nil {
+		pool.Start(5) // Start with 5 workers
 	}
 
 	// Start scheduled worker if available
@@ -311,9 +318,9 @@ func main() {
 	utils.Info("shutting down server")
 
 	// Stop worker pool gracefully
-	if workerPool != nil {
+	if pool != nil {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		if err := workerPool.Stop(shutdownCtx); err != nil {
+		if err := pool.Stop(shutdownCtx); err != nil {
 			utils.Error("worker pool shutdown error", slog.String("error", err.Error()))
 		}
 		shutdownCancel()

@@ -13,9 +13,9 @@ import (
 
 func TestRequireRole(t *testing.T) {
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	})
 
 	// Create middleware that requires admin role
@@ -75,9 +75,9 @@ func TestRequireRole(t *testing.T) {
 
 func TestRequireAdmin(t *testing.T) {
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("admin area"))
+		_, _ = w.Write([]byte("admin area"))
 	})
 
 	// Wrap with RequireAdmin middleware
@@ -134,9 +134,9 @@ func TestRequireAdmin(t *testing.T) {
 
 func TestRequireUserRole(t *testing.T) {
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("user area"))
+		_, _ = w.Write([]byte("user area"))
 	})
 
 	// Wrap with RequireUserRole middleware
@@ -195,9 +195,9 @@ func TestRequireOwnershipOrAdmin(t *testing.T) {
 	}
 
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("resource accessed"))
+		_, _ = w.Write([]byte("resource accessed"))
 	})
 
 	// Wrap with ownership middleware

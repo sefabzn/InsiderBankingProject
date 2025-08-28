@@ -21,20 +21,29 @@ type AuditLog struct {
 type EntityType string
 
 const (
-	EntityUser        EntityType = "user"
+	// EntityUser represents user entity type for audit logs
+	EntityUser EntityType = "user"
+	// EntityTransaction represents transaction entity type for audit logs
 	EntityTransaction EntityType = "transaction"
-	EntityBalance     EntityType = "balance"
+	// EntityBalance represents balance entity type for audit logs
+	EntityBalance EntityType = "balance"
 )
 
 // AuditAction defines common audit actions.
 type AuditAction string
 
 const (
-	ActionCreated   AuditAction = "created"
-	ActionUpdated   AuditAction = "updated"
-	ActionDeleted   AuditAction = "deleted"
+	// ActionCreated represents create action for audit logs
+	ActionCreated AuditAction = "created"
+	// ActionUpdated represents update action for audit logs
+	ActionUpdated AuditAction = "updated"
+	// ActionDeleted represents delete action for audit logs
+	ActionDeleted AuditAction = "deleted"
+	// ActionCompleted represents completed action for audit logs
 	ActionCompleted AuditAction = "completed"
-	ActionFailed    AuditAction = "failed"
+	// ActionFailed represents failed action for audit logs
+	ActionFailed AuditAction = "failed"
+	// ActionRolledBack represents rolled back action for audit logs
 	ActionRolledBack AuditAction = "rolled_back"
 )
 

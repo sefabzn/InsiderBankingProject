@@ -27,7 +27,7 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 			if breaker.GetState() == utils.StateOpen {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusServiceUnavailable)
-				w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s"}`, serviceName)))
+				_, _ = w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s"}`, serviceName)))
 				return
 			}
 
@@ -50,7 +50,7 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 					// Circuit breaker is open
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusServiceUnavailable)
-					w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s","state":"%s"}`, serviceName, cbErr.State)))
+					_, _ = w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s","state":"%s"}`, serviceName, cbErr.State)))
 					return
 				}
 				// Other error - this would have been handled by the circuit breaker already
@@ -61,7 +61,7 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 }
 
 // CircuitBreakerMetricsHandler provides circuit breaker metrics endpoint
-func CircuitBreakerMetricsHandler(w http.ResponseWriter, r *http.Request) {
+func CircuitBreakerMetricsHandler(w http.ResponseWriter, _ *http.Request) {
 	metrics := utils.GetCircuitBreakerMetrics()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -74,12 +74,12 @@ func CircuitBreakerMetricsHandler(w http.ResponseWriter, r *http.Request) {
 			response += ","
 		}
 		response += fmt.Sprintf(`"%s":{"state":"%s","total_requests":%d,"total_failures":%d,"total_successes":%d,"current_failures":%d}`,
-			name, metric.State, metric.TotalRequests, metric.TotalFailures, metric.TotalSuccesses, metric.CurrentFailures)
+			name, metric.State.String(), metric.TotalRequests, metric.TotalFailures, metric.TotalSuccesses, metric.CurrentFailures)
 		first = false
 	}
 	response += "}}"
 
-	w.Write([]byte(response))
+	_, _ = w.Write([]byte(response))
 }
 
 // ExternalServiceCall performs an external service call with circuit breaker protection

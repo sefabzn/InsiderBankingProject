@@ -127,19 +127,19 @@ func (r *transactionsRepo) ListForUser(ctx context.Context, userID uuid.UUID, fi
 		if filter.Type != nil {
 			conditions = append(conditions, fmt.Sprintf("type = $%d", argIndex))
 			args = append(args, string(*filter.Type))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Status != nil {
 			conditions = append(conditions, fmt.Sprintf("status = $%d", argIndex))
 			args = append(args, string(*filter.Status))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Since != nil {
 			conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIndex))
 			args = append(args, *filter.Since)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 	}
 
@@ -159,7 +159,7 @@ func (r *transactionsRepo) ListForUser(ctx context.Context, userID uuid.UUID, fi
 		if filter.Limit > 0 {
 			query += fmt.Sprintf(" LIMIT $%d", argIndex)
 			args = append(args, filter.Limit)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Offset > 0 {
@@ -187,25 +187,25 @@ func (r *transactionsRepo) List(ctx context.Context, filter *domain.TransactionF
 		if filter.UserID != nil {
 			conditions = append(conditions, fmt.Sprintf("(from_user_id = $%d OR to_user_id = $%d)", argIndex, argIndex))
 			args = append(args, *filter.UserID)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Type != nil {
 			conditions = append(conditions, fmt.Sprintf("type = $%d", argIndex))
 			args = append(args, string(*filter.Type))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Status != nil {
 			conditions = append(conditions, fmt.Sprintf("status = $%d", argIndex))
 			args = append(args, string(*filter.Status))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Since != nil {
 			conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIndex))
 			args = append(args, *filter.Since)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 	}
 
@@ -222,7 +222,7 @@ func (r *transactionsRepo) List(ctx context.Context, filter *domain.TransactionF
 		if filter.Limit > 0 {
 			query += fmt.Sprintf(" LIMIT $%d", argIndex)
 			args = append(args, filter.Limit)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Offset > 0 {
@@ -247,25 +247,25 @@ func (r *transactionsRepo) Count(ctx context.Context, filter *domain.Transaction
 		if filter.UserID != nil {
 			conditions = append(conditions, fmt.Sprintf("(from_user_id = $%d OR to_user_id = $%d)", argIndex, argIndex))
 			args = append(args, *filter.UserID)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Type != nil {
 			conditions = append(conditions, fmt.Sprintf("type = $%d", argIndex))
 			args = append(args, string(*filter.Type))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Status != nil {
 			conditions = append(conditions, fmt.Sprintf("status = $%d", argIndex))
 			args = append(args, string(*filter.Status))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Since != nil {
 			conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIndex))
 			args = append(args, *filter.Since)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 	}
 

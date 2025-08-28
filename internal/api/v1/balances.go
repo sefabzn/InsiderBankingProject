@@ -23,7 +23,7 @@ func (r *Router) handleGetCurrentBalance(w http.ResponseWriter, req *http.Reques
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -31,7 +31,7 @@ func (r *Router) handleGetCurrentBalance(w http.ResponseWriter, req *http.Reques
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -40,7 +40,7 @@ func (r *Router) handleGetCurrentBalance(w http.ResponseWriter, req *http.Reques
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to get balance","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to get balance","code":500}`))
 			return
 		}
 
@@ -63,7 +63,7 @@ func (r *Router) handleGetCurrentBalance(w http.ResponseWriter, req *http.Reques
 
 		if err := json.NewEncoder(w).Encode(response); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to encode response","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to encode response","code":500}`))
 			return
 		}
 	}))
@@ -81,7 +81,7 @@ func (r *Router) handleGetHistoricalBalance(w http.ResponseWriter, req *http.Req
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -89,7 +89,7 @@ func (r *Router) handleGetHistoricalBalance(w http.ResponseWriter, req *http.Req
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -107,7 +107,7 @@ func (r *Router) handleGetHistoricalBalance(w http.ResponseWriter, req *http.Req
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to get balance history","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to get balance history","code":500}`))
 			return
 		}
 
@@ -127,7 +127,7 @@ func (r *Router) handleGetHistoricalBalance(w http.ResponseWriter, req *http.Req
 		}
 		response += `],"limit":` + strconv.Itoa(limit) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -143,7 +143,7 @@ func (r *Router) handleGetBalanceAtTime(w http.ResponseWriter, req *http.Request
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -151,7 +151,7 @@ func (r *Router) handleGetBalanceAtTime(w http.ResponseWriter, req *http.Request
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -161,7 +161,7 @@ func (r *Router) handleGetBalanceAtTime(w http.ResponseWriter, req *http.Request
 		if timestampStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Timestamp parameter is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Timestamp parameter is required","code":400}`))
 			return
 		}
 
@@ -170,7 +170,7 @@ func (r *Router) handleGetBalanceAtTime(w http.ResponseWriter, req *http.Request
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf(`{"error":"Failed to get balance at time: %s","code":500}`, err.Error())))
+			_, _ = w.Write([]byte(fmt.Sprintf(`{"error":"Failed to get balance at time: %s","code":500}`, err.Error())))
 			return
 		}
 		//return the balance
@@ -180,7 +180,7 @@ func (r *Router) handleGetBalanceAtTime(w http.ResponseWriter, req *http.Request
 			balance.UserID.String(),
 			balance.Amount,
 			balance.LastUpdatedAt.Format(time.RFC3339), "showing current balance at the requested time")
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -191,7 +191,9 @@ func parseJSONBody(req *http.Request, v interface{}) error {
 	if req.Body == nil {
 		return fmt.Errorf("empty request body")
 	}
-	defer req.Body.Close()
+	defer func() {
+		_ = req.Body.Close() // Request body close error is typically safe to ignore
+	}()
 
 	decoder := json.NewDecoder(req.Body)
 	return decoder.Decode(v)
@@ -214,7 +216,7 @@ func (r *Router) handleCredit(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -222,7 +224,7 @@ func (r *Router) handleCredit(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -231,7 +233,7 @@ func (r *Router) handleCredit(w http.ResponseWriter, req *http.Request) {
 		if err := parseJSONBody(req, &creditReq); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
 			return
 		}
 
@@ -240,7 +242,7 @@ func (r *Router) handleCredit(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
 			return
 		}
 
@@ -256,7 +258,7 @@ func (r *Router) handleCredit(w http.ResponseWriter, req *http.Request) {
 			`","status":"` + transaction.Status +
 			`","created_at":"` + transaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00") + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -272,7 +274,7 @@ func (r *Router) handleDebit(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -280,7 +282,7 @@ func (r *Router) handleDebit(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -289,7 +291,7 @@ func (r *Router) handleDebit(w http.ResponseWriter, req *http.Request) {
 		if err := parseJSONBody(req, &debitReq); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
 			return
 		}
 
@@ -298,7 +300,7 @@ func (r *Router) handleDebit(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
 			return
 		}
 
@@ -314,7 +316,7 @@ func (r *Router) handleDebit(w http.ResponseWriter, req *http.Request) {
 			`","status":"` + transaction.Status +
 			`","created_at":"` + transaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00") + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -330,7 +332,7 @@ func (r *Router) handleTransfer(w http.ResponseWriter, req *http.Request) {
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -338,7 +340,7 @@ func (r *Router) handleTransfer(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -347,7 +349,7 @@ func (r *Router) handleTransfer(w http.ResponseWriter, req *http.Request) {
 		if err := parseJSONBody(req, &transferReq); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid JSON request body","code":400}`))
 			return
 		}
 
@@ -356,7 +358,7 @@ func (r *Router) handleTransfer(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
 			return
 		}
 
@@ -372,7 +374,7 @@ func (r *Router) handleTransfer(w http.ResponseWriter, req *http.Request) {
 			`","status":"` + transaction.Status +
 			`","created_at":"` + transaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00") + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -388,7 +390,7 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -396,7 +398,7 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -407,7 +409,7 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 		if len(pathParts) < 5 || pathParts[4] == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Transaction ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Transaction ID is required","code":400}`))
 			return
 		}
 
@@ -416,7 +418,7 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid transaction ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid transaction ID format","code":400}`))
 			return
 		}
 
@@ -427,13 +429,13 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 			if err.Error() == "access denied: you don't have permission to view this transaction" {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(`{"error":"Access denied: you don't have permission to view this transaction","code":403}`))
+				_, _ = w.Write([]byte(`{"error":"Access denied: you don't have permission to view this transaction","code":403}`))
 				return
 			}
 
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error":"Transaction not found","code":404}`))
+			_, _ = w.Write([]byte(`{"error":"Transaction not found","code":404}`))
 			return
 		}
 
@@ -446,11 +448,11 @@ func (r *Router) handleGetTransaction(w http.ResponseWriter, req *http.Request) 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to marshal transaction response","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to marshal transaction response","code":500}`))
 			return
 		}
 
-		w.Write(jsonResponse)
+		_, _ = w.Write(jsonResponse)
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -466,7 +468,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -474,7 +476,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -488,7 +490,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 			} else if limit <= 0 || limit > 100 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Limit must be between 1 and 100","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Limit must be between 1 and 100","code":400}`))
 				return
 			}
 		}
@@ -500,7 +502,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 			} else if offset < 0 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Offset must be non-negative","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Offset must be non-negative","code":400}`))
 				return
 			}
 		}
@@ -520,7 +522,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 			default:
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Invalid type. Must be 'credit', 'debit', or 'transfer'","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Invalid type. Must be 'credit', 'debit', or 'transfer'","code":400}`))
 				return
 			}
 		}
@@ -540,7 +542,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 			default:
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Invalid status. Must be 'pending', 'success', or 'failed'","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Invalid status. Must be 'pending', 'success', or 'failed'","code":400}`))
 				return
 			}
 		}
@@ -552,7 +554,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 			} else {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Invalid since parameter. Must be RFC3339 timestamp","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Invalid since parameter. Must be RFC3339 timestamp","code":400}`))
 				return
 			}
 		}
@@ -562,7 +564,7 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to get transaction history","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to get transaction history","code":500}`))
 			return
 		}
 
@@ -591,11 +593,11 @@ func (r *Router) handleGetTransactionHistory(w http.ResponseWriter, req *http.Re
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to marshal response","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to marshal response","code":500}`))
 			return
 		}
 
-		w.Write(jsonResponse)
+		_, _ = w.Write(jsonResponse)
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -611,7 +613,7 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -619,7 +621,7 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -630,7 +632,7 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 		if len(pathParts) < 6 || pathParts[4] == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Transaction ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Transaction ID is required","code":400}`))
 			return
 		}
 
@@ -639,7 +641,7 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid transaction ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid transaction ID format","code":400}`))
 			return
 		}
 
@@ -663,17 +665,17 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 			case err.Error() == "access denied: you don't have permission to rollback this transaction":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(`{"error":"Access denied: you don't have permission to rollback this transaction","code":403}`))
+				_, _ = w.Write([]byte(`{"error":"Access denied: you don't have permission to rollback this transaction","code":403}`))
 				return
 			case err.Error() == "can only rollback completed transactions":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Can only rollback completed transactions","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Can only rollback completed transactions","code":400}`))
 				return
 			default:
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
 				return
 			}
 		}
@@ -690,7 +692,7 @@ func (r *Router) handleRollbackTransaction(w http.ResponseWriter, req *http.Requ
 			`","status":"` + transaction.Status +
 			`","created_at":"` + transaction.CreatedAt.Format("2006-01-02T15:04:05Z07:00") + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)

@@ -41,10 +41,10 @@ type InvalidRequest struct {
 func TestValidateJSON(t *testing.T) {
 	// Create test handler
 	var receivedBody TestRequest
-	testHandler := func(w http.ResponseWriter, r *http.Request, body TestRequest) {
+	testHandler := func(w http.ResponseWriter, _ *http.Request, body TestRequest) {
 		receivedBody = body
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	}
 
 	// Wrap with validation middleware
@@ -160,12 +160,13 @@ func TestValidateQueryParams(t *testing.T) {
 		var errors []ValidationError
 
 		limit := r.URL.Query().Get("limit")
-		if limit == "" {
+		switch limit {
+		case "":
 			errors = append(errors, ValidationError{
 				Field:   "limit",
 				Message: "limit parameter is required",
 			})
-		} else if limit == "invalid" {
+		case "invalid":
 			errors = append(errors, ValidationError{
 				Field:   "limit",
 				Message: "limit must be a number",
@@ -176,9 +177,9 @@ func TestValidateQueryParams(t *testing.T) {
 	}
 
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	})
 
 	// Wrap with validation middleware
@@ -237,9 +238,9 @@ func TestValidateQueryParams(t *testing.T) {
 }
 
 func TestValidateContentType(t *testing.T) {
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	})
 
 	handler := ValidateContentType("application/json")(testHandler)
@@ -294,7 +295,7 @@ func TestValidationErrorResponse(t *testing.T) {
 	}
 
 	// Create a test handler that returns validation errors
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		writeValidationError(w, errors)
 	})
 

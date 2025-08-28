@@ -12,10 +12,27 @@ import (
 type CircuitBreakerState int32
 
 const (
+	// StateClosed represents closed circuit breaker state (normal operation)
 	StateClosed CircuitBreakerState = iota
+	// StateOpen represents open circuit breaker state (failing fast)
 	StateOpen
+	// StateHalfOpen represents half-open circuit breaker state (testing recovery)
 	StateHalfOpen
 )
+
+// String returns the string representation of CircuitBreakerState
+func (s CircuitBreakerState) String() string {
+	switch s {
+	case StateClosed:
+		return "closed"
+	case StateOpen:
+		return "open"
+	case StateHalfOpen:
+		return "half-open"
+	default:
+		return "unknown"
+	}
+}
 
 // CircuitBreaker implements the circuit breaker pattern for external service calls
 type CircuitBreaker struct {
@@ -36,8 +53,6 @@ type CircuitBreaker struct {
 	totalFailures        int64
 	totalSuccesses       int64
 	consecutiveSuccesses int32
-
-	mu sync.RWMutex
 }
 
 // CircuitBreakerConfig holds configuration for circuit breaker

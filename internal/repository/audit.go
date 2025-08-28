@@ -93,25 +93,25 @@ func (r *auditRepo) List(ctx context.Context, filter *domain.AuditLogFilter) ([]
 		if filter.EntityType != nil {
 			conditions = append(conditions, fmt.Sprintf("entity_type = $%d", argIndex))
 			args = append(args, string(*filter.EntityType))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.EntityID != nil {
 			conditions = append(conditions, fmt.Sprintf("entity_id = $%d", argIndex))
 			args = append(args, *filter.EntityID)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Action != nil {
 			conditions = append(conditions, fmt.Sprintf("action = $%d", argIndex))
 			args = append(args, *filter.Action)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Since != nil {
 			conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIndex))
 			args = append(args, *filter.Since)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 	}
 
@@ -128,7 +128,7 @@ func (r *auditRepo) List(ctx context.Context, filter *domain.AuditLogFilter) ([]
 		if filter.Limit > 0 {
 			query += fmt.Sprintf(" LIMIT $%d", argIndex)
 			args = append(args, filter.Limit)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Offset > 0 {
@@ -165,25 +165,25 @@ func (r *auditRepo) Count(ctx context.Context, filter *domain.AuditLogFilter) (i
 		if filter.EntityType != nil {
 			conditions = append(conditions, fmt.Sprintf("entity_type = $%d", argIndex))
 			args = append(args, string(*filter.EntityType))
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.EntityID != nil {
 			conditions = append(conditions, fmt.Sprintf("entity_id = $%d", argIndex))
 			args = append(args, *filter.EntityID)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Action != nil {
 			conditions = append(conditions, fmt.Sprintf("action = $%d", argIndex))
 			args = append(args, *filter.Action)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 
 		if filter.Since != nil {
 			conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIndex))
 			args = append(args, *filter.Since)
-			argIndex++
+			argIndex++ //nolint:ineffassign // argIndex is used to generate SQL parameter placeholders
 		}
 	}
 

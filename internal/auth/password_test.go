@@ -143,7 +143,7 @@ func TestPasswordRoundTrip(t *testing.T) {
 	}
 
 	for _, password := range testPasswords {
-		t.Run("password_"+password[:min(10, len(password))], func(t *testing.T) {
+		t.Run("password_"+password[:minInt(10, len(password))], func(t *testing.T) {
 			// Hash the password
 			hash, err := HashPassword(password)
 			if err != nil {
@@ -171,7 +171,7 @@ func TestPasswordRoundTrip(t *testing.T) {
 	}
 }
 
-func min(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	}

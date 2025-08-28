@@ -23,6 +23,8 @@ var (
 		Help: "Current depth of the transaction processing queue",
 	})
 
+	// activeGoroutines is used by Prometheus for monitoring active goroutines
+	//nolint:unused // Used by Prometheus metrics collection
 	activeGoroutines = promauto.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "banking_goroutines_active",
 		Help: "Number of active goroutines",
@@ -30,6 +32,8 @@ var (
 		return float64(runtime.NumGoroutine())
 	})
 
+	// uptimeSeconds is used by Prometheus for monitoring application uptime
+	//nolint:unused // Used by Prometheus metrics collection
 	uptimeSeconds = promauto.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "banking_uptime_seconds",
 		Help: "Application uptime in seconds",

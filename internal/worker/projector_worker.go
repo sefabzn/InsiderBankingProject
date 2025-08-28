@@ -13,7 +13,7 @@ import (
 // ProjectorWorker processes events and updates read models through projectors
 type ProjectorWorker struct {
 	projectorSvc service.ProjectorServiceInterface
-	dbPool       interface{} // Database pool for locking
+	dbPool       interface{} //nolint:unused // Reserved for future database locking functionality
 	ticker       *time.Ticker
 	stopChan     chan struct{}
 	running      bool
@@ -113,24 +113,6 @@ func (w *ProjectorWorker) processLoop() {
 	}
 }
 
-// processNewEvents processes new events since the last run
-func (w *ProjectorWorker) processNewEvents() {
-	ctx := context.Background()
-
-	// Process events from the last 5 minutes to catch any missed events
-	since := time.Now().Add(-5 * time.Minute)
-
-	utils.Info("processing new events", slog.String("since", since.Format(time.RFC3339)))
-
-	err := w.projectorSvc.ProcessEventsSince(ctx, since)
-	if err != nil {
-		utils.Error("failed to process new events", slog.String("error", err.Error()))
-		return
-	}
-
-	utils.Info("completed processing new events")
-}
-
 // processNewEventsWithLock processes new events with locking to prevent race conditions
 func (w *ProjectorWorker) processNewEventsWithLock() {
 	lockKey := "projector_processing_lock"
@@ -165,10 +147,8 @@ func (w *ProjectorWorker) tryAcquireLock(lockKey string) bool {
 
 	// Simple approach: only allow instance 1 to process events
 	// This is a temporary solution for the MVP
-	return true // Allow all for now, will implement proper locking later
-
 	utils.Info("lock acquisition attempted", slog.String("lock_key", lockKey))
-	return true
+	return true // Allow all for now, will implement proper locking later
 }
 
 // releaseLock releases a database lock

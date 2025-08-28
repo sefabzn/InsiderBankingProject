@@ -167,7 +167,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (*Login
 }
 
 // RefreshToken generates a new access token from a refresh token.
-func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error) {
+func (s *authService) RefreshToken(_ context.Context, refreshToken string) (*TokenResponse, error) {
 	// Generate new access token
 	newAccessToken, err := s.jwtManager.RefreshAccessToken(refreshToken)
 	if err != nil {

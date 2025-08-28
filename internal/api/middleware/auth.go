@@ -113,5 +113,5 @@ func writeUnauthorized(w http.ResponseWriter, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusUnauthorized)
 	response := `{"error":"` + message + `","code":401}`
-	w.Write([]byte(response))
+	_, _ = w.Write([]byte(response))
 }

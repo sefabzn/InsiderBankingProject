@@ -26,7 +26,9 @@ type User struct {
 type UserRole string
 
 const (
-	RoleUser  UserRole = "user"
+	// RoleUser represents regular user role
+	RoleUser UserRole = "user"
+	// RoleAdmin represents admin user role
 	RoleAdmin UserRole = "admin"
 )
 

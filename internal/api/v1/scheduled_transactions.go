@@ -24,14 +24,14 @@ func (r *Router) handleScheduleTransaction(w http.ResponseWriter, req *http.Requ
 			if !ok {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+				_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 				return
 			}
 			userID, err := uuid.Parse(userIDStr)
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+				_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 				return
 			}
 
@@ -39,7 +39,7 @@ func (r *Router) handleScheduleTransaction(w http.ResponseWriter, req *http.Requ
 			if err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"` + err.Error() + `","code":400}`))
 				return
 			}
 
@@ -58,7 +58,7 @@ func (r *Router) handleScheduleTransaction(w http.ResponseWriter, req *http.Requ
 				`","is_active":` + strconv.FormatBool(scheduledTx.IsActive) + `,` +
 				`"created_at":"` + scheduledTx.CreatedAt.Format(time.RFC3339) + `"}`
 
-			w.Write([]byte(response))
+			_, _ = w.Write([]byte(response))
 		})
 
 		handler.ServeHTTP(w, req)
@@ -77,7 +77,7 @@ func (r *Router) handleGetScheduledTransactions(w http.ResponseWriter, req *http
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -85,7 +85,7 @@ func (r *Router) handleGetScheduledTransactions(w http.ResponseWriter, req *http
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -130,7 +130,7 @@ func (r *Router) handleGetScheduledTransactions(w http.ResponseWriter, req *http
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to list scheduled transactions","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to list scheduled transactions","code":500}`))
 			return
 		}
 
@@ -155,7 +155,7 @@ func (r *Router) handleGetScheduledTransactions(w http.ResponseWriter, req *http
 		}
 		response += `],"limit":` + strconv.Itoa(limit) + `,"offset":` + strconv.Itoa(offset) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -171,7 +171,7 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -179,7 +179,7 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -188,7 +188,7 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 		if txIDStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Scheduled transaction ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Scheduled transaction ID is required","code":400}`))
 			return
 		}
 
@@ -196,7 +196,7 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid scheduled transaction ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid scheduled transaction ID format","code":400}`))
 			return
 		}
 
@@ -205,12 +205,12 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 			if err.Error() == "access denied: not owner of scheduled transaction" {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(`{"error":"Access denied","code":403}`))
+				_, _ = w.Write([]byte(`{"error":"Access denied","code":403}`))
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error":"Scheduled transaction not found","code":404}`))
+			_, _ = w.Write([]byte(`{"error":"Scheduled transaction not found","code":404}`))
 			return
 		}
 
@@ -229,7 +229,7 @@ func (r *Router) handleGetScheduledTransaction(w http.ResponseWriter, req *http.
 			`","is_active":` + strconv.FormatBool(scheduledTx.IsActive) + `,` +
 			`"created_at":"` + scheduledTx.CreatedAt.Format(time.RFC3339) + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 
 	finalHandler.ServeHTTP(w, req)
@@ -245,7 +245,7 @@ func (r *Router) handleCancelScheduledTransaction(w http.ResponseWriter, req *ht
 		if !ok {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"User not authenticated","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"User not authenticated","code":401}`))
 			return
 		}
 
@@ -253,7 +253,7 @@ func (r *Router) handleCancelScheduledTransaction(w http.ResponseWriter, req *ht
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID","code":500}`))
 			return
 		}
 
@@ -262,7 +262,7 @@ func (r *Router) handleCancelScheduledTransaction(w http.ResponseWriter, req *ht
 		if txIDStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Scheduled transaction ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Scheduled transaction ID is required","code":400}`))
 			return
 		}
 
@@ -270,7 +270,7 @@ func (r *Router) handleCancelScheduledTransaction(w http.ResponseWriter, req *ht
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid scheduled transaction ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid scheduled transaction ID format","code":400}`))
 			return
 		}
 
@@ -279,18 +279,18 @@ func (r *Router) handleCancelScheduledTransaction(w http.ResponseWriter, req *ht
 			if err.Error() == "access denied: not owner of scheduled transaction" {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte(`{"error":"Access denied","code":403}`))
+				_, _ = w.Write([]byte(`{"error":"Access denied","code":403}`))
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error":"Scheduled transaction not found","code":404}`))
+			_, _ = w.Write([]byte(`{"error":"Scheduled transaction not found","code":404}`))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message":"Scheduled transaction cancelled successfully"}`))
+		_, _ = w.Write([]byte(`{"message":"Scheduled transaction cancelled successfully"}`))
 	}))
 
 	finalHandler.ServeHTTP(w, req)

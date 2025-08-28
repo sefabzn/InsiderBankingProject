@@ -12,7 +12,7 @@ import (
 // Note: These tests require a test database connection.
 // For now, we'll create unit tests that test the structure and interface compliance.
 
-func TestUsersRepoInterface(t *testing.T) {
+func TestUsersRepoInterface(_ *testing.T) {
 	// This test ensures the usersRepo implements UsersRepo interface
 	// The actual implementation will be tested when we have a test database
 	var _ UsersRepo = (*usersRepo)(nil)

@@ -126,5 +126,5 @@ func writeForbidden(w http.ResponseWriter, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusForbidden)
 	response := `{"error":"` + message + `","code":403}`
-	w.Write([]byte(response))
+	_, _ = w.Write([]byte(response))
 }

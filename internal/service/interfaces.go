@@ -95,8 +95,8 @@ type TransactionService interface {
 	TransferSync(ctx context.Context, fromUserID uuid.UUID, req *domain.TransferRequest) (*domain.TransactionResponse, error)
 	RollbackSync(ctx context.Context, transactionID uuid.UUID, requestingUserID uuid.UUID) (*domain.TransactionResponse, error)
 
-	// SetWorkerPool sets the worker pool for async processing.
-	SetWorkerPool(workerPool interface{})
+	// SetPool sets the worker pool for async processing.
+	SetPool(pool interface{})
 
 	// SetMetricsCollector sets the metrics collector for tracking metrics.
 	SetMetricsCollector(collector interface{})

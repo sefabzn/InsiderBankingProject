@@ -31,31 +31,42 @@ type EventEnvelope struct {
 type AggregateType string
 
 const (
-	AggregateUser        AggregateType = "user"
-	AggregateBalance     AggregateType = "balance"
+	// AggregateUser represents user aggregate type
+	AggregateUser AggregateType = "user"
+	// AggregateBalance represents balance aggregate type
+	AggregateBalance AggregateType = "balance"
+	// AggregateTransaction represents transaction aggregate type
 	AggregateTransaction AggregateType = "transaction"
 )
 
-// Event Types
+// EventType defines valid event types for the event sourcing system.
 type EventType string
 
 const (
-	// User Events
+	// EventUserRegistered represents user registration event
 	EventUserRegistered EventType = "UserRegistered"
-	EventUserUpdated    EventType = "UserUpdated"
-	EventUserDeleted    EventType = "UserDeleted"
+	// EventUserUpdated represents user update event
+	EventUserUpdated EventType = "UserUpdated"
+	// EventUserDeleted represents user deletion event
+	EventUserDeleted EventType = "UserDeleted"
 
-	// Balance Events
+	// EventBalanceInitialized represents balance initialization event
 	EventBalanceInitialized EventType = "BalanceInitialized"
-	EventAmountCredited     EventType = "AmountCredited"
-	EventAmountDebited      EventType = "AmountDebited"
+	// EventAmountCredited represents amount credited to balance event
+	EventAmountCredited EventType = "AmountCredited"
+	// EventAmountDebited represents amount debited from balance event
+	EventAmountDebited EventType = "AmountDebited"
 
-	// Transaction Events
-	EventTransactionStarted    EventType = "TransactionStarted"
-	EventTransactionCompleted  EventType = "TransactionCompleted"
-	EventTransactionFailed     EventType = "TransactionFailed"
+	// EventTransactionStarted represents transaction started event
+	EventTransactionStarted EventType = "TransactionStarted"
+	// EventTransactionCompleted represents transaction completed event
+	EventTransactionCompleted EventType = "TransactionCompleted"
+	// EventTransactionFailed represents transaction failed event
+	EventTransactionFailed EventType = "TransactionFailed"
+	// EventTransactionRolledBack represents transaction rolled back event
 	EventTransactionRolledBack EventType = "TransactionRolledBack"
-	EventTransferExecuted      EventType = "TransferExecuted"
+	// EventTransferExecuted represents transfer executed event
+	EventTransferExecuted EventType = "TransferExecuted"
 )
 
 // UserRegisteredEvent represents a user registration event

@@ -191,7 +191,7 @@ func (p *ProjectorService) projectUserEvents(ctx context.Context, userID uuid.UU
 				UpdatedAt:    event.CreatedAt,
 			}
 
-			p.userRepo.Create(ctx, user) // Ignore error if user exists
+			_ = p.userRepo.Create(ctx, user) // Ignore error if user exists
 
 		case string(domain.EventUserUpdated):
 			var eventData domain.UserUpdatedEvent
@@ -217,7 +217,7 @@ func (p *ProjectorService) projectUserEvents(ctx context.Context, userID uuid.UU
 			}
 			user.UpdatedAt = event.CreatedAt
 
-			p.userRepo.Update(ctx, user)
+			_ = p.userRepo.Update(ctx, user)
 		}
 	}
 	return nil

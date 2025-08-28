@@ -21,8 +21,8 @@ type TransactionService interface {
 	RollbackSync(ctx context.Context, transactionID string, requestingUserID string) (interface{}, error)
 }
 
-// WorkerPool manages a pool of workers that process transaction jobs asynchronously.
-type WorkerPool struct {
+// Pool manages a pool of workers that process transaction jobs asynchronously.
+type Pool struct {
 	jobQueue       *JobQueue
 	transactionSvc TransactionService
 	workers        []*Worker
@@ -47,9 +47,9 @@ type Stats struct {
 	QueueSize     int   `json:"queue_size"`
 }
 
-// NewWorkerPool creates a new worker pool.
-func NewWorkerPool(jobQueue *JobQueue, transactionSvc TransactionService) *WorkerPool {
-	return &WorkerPool{
+// NewPool creates a new worker pool.
+func NewPool(jobQueue *JobQueue, transactionSvc TransactionService) *Pool {
+	return &Pool{
 		jobQueue:       jobQueue,
 		transactionSvc: transactionSvc,
 		stopped:        make(chan struct{}),
@@ -57,7 +57,7 @@ func NewWorkerPool(jobQueue *JobQueue, transactionSvc TransactionService) *Worke
 }
 
 // Start starts the specified number of workers.
-func (wp *WorkerPool) Start(numWorkers int) {
+func (wp *Pool) Start(numWorkers int) {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
@@ -85,7 +85,7 @@ func (wp *WorkerPool) Start(numWorkers int) {
 }
 
 // Stop gracefully stops all workers.
-func (wp *WorkerPool) Stop(ctx context.Context) error {
+func (wp *Pool) Stop(ctx context.Context) error {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 
@@ -117,7 +117,7 @@ func (wp *WorkerPool) Stop(ctx context.Context) error {
 }
 
 // SubmitJob submits a job to the worker pool.
-func (wp *WorkerPool) SubmitJob(job *TransactionJob) {
+func (wp *Pool) SubmitJob(job *TransactionJob) {
 	select {
 	case wp.jobQueue.SubmitChan <- job:
 		utils.Debug("job submitted successfully",
@@ -138,7 +138,7 @@ func (wp *WorkerPool) SubmitJob(job *TransactionJob) {
 }
 
 // GetStats returns current worker pool statistics.
-func (wp *WorkerPool) GetStats() Stats {
+func (wp *Pool) GetStats() Stats {
 	wp.mu.RLock()
 	defer wp.mu.RUnlock()
 
@@ -150,7 +150,7 @@ func (wp *WorkerPool) GetStats() Stats {
 }
 
 // IsStopped returns whether the worker pool has been stopped.
-func (wp *WorkerPool) IsStopped() bool {
+func (wp *Pool) IsStopped() bool {
 	select {
 	case <-wp.stopped:
 		return true

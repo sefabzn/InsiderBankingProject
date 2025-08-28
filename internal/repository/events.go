@@ -238,7 +238,7 @@ type EventEnvelope struct {
 }
 
 // LoadEventEnvelope loads an event with its deserialized data
-func (r *EventRepository) LoadEventEnvelope(ctx context.Context, event *domain.Event, target interface{}) (*EventEnvelope, error) {
+func (r *EventRepository) LoadEventEnvelope(_ context.Context, event *domain.Event, target interface{}) (*EventEnvelope, error) {
 	err := event.UnmarshalData(target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal event data: %w", err)
@@ -266,7 +266,9 @@ func (r *EventRepository) AppendEvents(ctx context.Context, events []*domain.Eve
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx) // Rollback error is typically safe to ignore
+	}()
 
 	for _, event := range events {
 		currentVersion, err := r.getCurrentVersionTx(ctx, tx, event.AggregateType, event.AggregateID)

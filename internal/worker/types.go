@@ -12,9 +12,13 @@ import (
 type TransactionJobType string
 
 const (
-	JobTypeCredit   TransactionJobType = "credit"
-	JobTypeDebit    TransactionJobType = "debit"
+	// JobTypeCredit represents credit transaction job type
+	JobTypeCredit TransactionJobType = "credit"
+	// JobTypeDebit represents debit transaction job type
+	JobTypeDebit TransactionJobType = "debit"
+	// JobTypeTransfer represents transfer transaction job type
 	JobTypeTransfer TransactionJobType = "transfer"
+	// JobTypeRollback represents rollback transaction job type
 	JobTypeRollback TransactionJobType = "rollback"
 )
 
@@ -57,7 +61,7 @@ func NewJobQueue(bufferSize int) *JobQueue {
 }
 
 // NewTransactionJob creates a new transaction job with a unique ID and response channel.
-func NewTransactionJob(jobType TransactionJobType, ctx context.Context) *TransactionJob {
+func NewTransactionJob(ctx context.Context, jobType TransactionJobType) *TransactionJob {
 	return &TransactionJob{
 		ID:           uuid.New(),
 		Type:         jobType,

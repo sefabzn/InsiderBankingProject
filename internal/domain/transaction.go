@@ -24,8 +24,11 @@ type Transaction struct {
 type TransactionType string
 
 const (
-	TypeCredit   TransactionType = "credit"
-	TypeDebit    TransactionType = "debit"
+	// TypeCredit represents credit transaction type
+	TypeCredit TransactionType = "credit"
+	// TypeDebit represents debit transaction type
+	TypeDebit TransactionType = "debit"
+	// TypeTransfer represents transfer transaction type
 	TypeTransfer TransactionType = "transfer"
 )
 
@@ -33,9 +36,12 @@ const (
 type TransactionStatus string
 
 const (
+	// StatusPending represents pending transaction status
 	StatusPending TransactionStatus = "pending"
+	// StatusSuccess represents success transaction status
 	StatusSuccess TransactionStatus = "success"
-	StatusFailed  TransactionStatus = "failed"
+	// StatusFailed represents failed transaction status
+	StatusFailed TransactionStatus = "failed"
 )
 
 // CreateTransactionRequest represents the data needed for a transaction.

@@ -272,19 +272,27 @@ func (r *ScheduledTransactionRepository) GetDueForExecution(ctx context.Context,
 	// Debug: Check different conditions
 	totalQuery := `SELECT COUNT(*) FROM scheduled_transactions`
 	var totalCount int
-	r.pool.QueryRow(ctx, totalQuery).Scan(&totalCount)
+	if err := r.pool.QueryRow(ctx, totalQuery).Scan(&totalCount); err != nil {
+		totalCount = -1 // Indicate error
+	}
 
 	activeQuery := `SELECT COUNT(*) FROM scheduled_transactions WHERE status = 'active'`
 	var activeCount int
-	r.pool.QueryRow(ctx, activeQuery).Scan(&activeCount)
+	if err := r.pool.QueryRow(ctx, activeQuery).Scan(&activeCount); err != nil {
+		activeCount = -1 // Indicate error
+	}
 
 	dueQuery := `SELECT COUNT(*) FROM scheduled_transactions WHERE execute_at <= NOW()`
 	var dueCount int
-	r.pool.QueryRow(ctx, dueQuery).Scan(&dueCount)
+	if err := r.pool.QueryRow(ctx, dueQuery).Scan(&dueCount); err != nil {
+		dueCount = -1 // Indicate error
+	}
 
 	bufferQuery := `SELECT COUNT(*) FROM scheduled_transactions WHERE updated_at < NOW() - INTERVAL '1 seconds'`
 	var bufferCount int
-	r.pool.QueryRow(ctx, bufferQuery).Scan(&bufferCount)
+	if err := r.pool.QueryRow(ctx, bufferQuery).Scan(&bufferCount); err != nil {
+		bufferCount = -1 // Indicate error
+	}
 
 	fmt.Printf("DEBUG: Total transactions: %d, Active: %d, Due: %d, After buffer: %d\n",
 		totalCount, activeCount, dueCount, bufferCount)
@@ -302,7 +310,9 @@ func (r *ScheduledTransactionRepository) GetDueForExecution(ctx context.Context,
 		var isActive bool
 		var executeAt, updatedAt time.Time
 		var lastExecutedAt *time.Time
-		rows.Scan(&id, &status, &isActive, &executeAt, &updatedAt, &lastExecutedAt)
+		if err := rows.Scan(&id, &status, &isActive, &executeAt, &updatedAt, &lastExecutedAt); err != nil {
+			continue // Skip this row on scan error
+		}
 		fmt.Printf("Recent transaction: ID=%s, Status=%s, Active=%t, ExecuteAt=%v, UpdatedAt=%v\n",
 			id[:8]+"...", status, isActive, executeAt, updatedAt)
 	}

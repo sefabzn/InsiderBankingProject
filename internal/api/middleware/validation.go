@@ -211,7 +211,10 @@ func writeValidationError(w http.ResponseWriter, errors []ValidationError) {
 		Errors: errors,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode validation error response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // ValidateContentType creates middleware that validates request content type.

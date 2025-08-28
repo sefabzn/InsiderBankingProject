@@ -55,9 +55,9 @@ func (s *TransactionServiceImpl) incrementTransactionCounter() {
 	}
 }
 
-// SetWorkerPool sets the worker pool for async processing.
-func (s *TransactionServiceImpl) SetWorkerPool(workerPool interface{}) {
-	if wp, ok := workerPool.(WorkerService); ok {
+// SetPool sets the worker pool for async processing.
+func (s *TransactionServiceImpl) SetPool(pool interface{}) {
+	if wp, ok := pool.(WorkerService); ok {
 		s.workerPool = wp
 	}
 }
@@ -134,7 +134,7 @@ func (s *TransactionServiceImpl) CreditSync(ctx context.Context, userID uuid.UUI
 	// Update the balance
 	if err := s.repos.Balances.Upsert(ctx, newBalance); err != nil {
 		// Mark transaction as failed if balance update fails
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to update balance: %w", err)
 	}
 
@@ -165,7 +165,7 @@ func (s *TransactionServiceImpl) CreditSync(ctx context.Context, userID uuid.UUI
 	}
 
 	// Log the audit event
-	s.repos.Audit.Log(ctx, "transaction", transaction.ID, "credit", map[string]interface{}{
+	_ = s.repos.Audit.Log(ctx, "transaction", transaction.ID, "credit", map[string]interface{}{
 		"user_id": userID,
 		"amount":  req.Amount,
 	})
@@ -230,7 +230,7 @@ func (s *TransactionServiceImpl) DebitSync(ctx context.Context, userID uuid.UUID
 
 	if err := s.repos.Balances.Upsert(ctx, newBalance); err != nil {
 		// Mark transaction as failed
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to update balance: %w", err)
 	}
 
@@ -261,7 +261,7 @@ func (s *TransactionServiceImpl) DebitSync(ctx context.Context, userID uuid.UUID
 	}
 
 	// Log the audit event
-	s.repos.Audit.Log(ctx, "transaction", transaction.ID, "debit", map[string]interface{}{
+	_ = s.repos.Audit.Log(ctx, "transaction", transaction.ID, "debit", map[string]interface{}{
 		"user_id": userID,
 		"amount":  req.Amount,
 	})
@@ -338,40 +338,42 @@ func (s *TransactionServiceImpl) TransferSync(ctx context.Context, fromUserID uu
 
 	// Use database transaction to ensure atomicity
 	if s.dbPool == nil {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("database pool not available")
 	}
 
 	// Type assert to pgxpool.Pool
 	pool, ok := s.dbPool.(*pgxpool.Pool)
 	if !ok {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("invalid database pool type")
 	}
 
 	// Begin database transaction
 	tx, err := pool.Begin(ctx)
 	if err != nil {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx) // Rollback error is typically safe to ignore
+	}()
 
 	// Debit sender (subtract amount)
 	if err := s.repos.Balances.AddAmountTx(ctx, tx, fromUserID, -req.Amount); err != nil {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to debit sender: %w", err)
 	}
 
 	// Credit receiver (add amount)
 	if err := s.repos.Balances.AddAmountTx(ctx, tx, req.ToUserID, req.Amount); err != nil {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to credit receiver: %w", err)
 	}
 
 	// Commit the database transaction
 	if err := tx.Commit(ctx); err != nil {
-		s.repos.Transactions.MarkFailed(ctx, transaction.ID)
+		_ = s.repos.Transactions.MarkFailed(ctx, transaction.ID)
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -415,7 +417,7 @@ func (s *TransactionServiceImpl) TransferSync(ctx context.Context, fromUserID uu
 	}
 
 	// Log the audit event
-	s.repos.Audit.Log(ctx, "transaction", transaction.ID, "transfer", map[string]interface{}{
+	_ = s.repos.Audit.Log(ctx, "transaction", transaction.ID, "transfer", map[string]interface{}{
 		"from_user_id": fromUserID,
 		"to_user_id":   req.ToUserID,
 		"amount":       req.Amount,
@@ -525,10 +527,8 @@ func (s *TransactionServiceImpl) GetHistory(ctx context.Context, userID uuid.UUI
 	}
 
 	// Simple caching for basic queries (no filters, small result set)
-	if useCache && s.cache != nil && len(responses) <= 20 {
-		// We would need to modify the cache interface to support caching slices
-		// For now, we'll just cache individual transactions as done above
-	}
+	// Note: Slice caching not implemented yet - individual transactions are cached above
+	_ = useCache && s.cache != nil && len(responses) <= 20 // Placeholder for future slice caching
 
 	return responses, nil
 }
@@ -652,7 +652,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 		if toUserID != nil {
 			currentBalance, err := s.repos.Balances.GetByUserID(ctx, *toUserID)
 			if err != nil && !isNotFoundError(err) {
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to get balance for rollback: %w", err)
 			}
 
@@ -667,7 +667,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 
 			// Ensure amount is not negative (defensive check)
 			if newAmount < 0 {
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("rollback would result in negative balance: current=%.2f, rollback_amount=%.2f",
 					currentBalance.Amount, originalTx.Amount)
 			}
@@ -678,7 +678,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 				Currency: originalTx.Currency,
 			}
 			if err := s.repos.Balances.Upsert(ctx, newBalance); err != nil {
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to rollback credit: %w", err)
 			}
 		}
@@ -687,7 +687,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 		if fromUserID != nil {
 			currentBalance, err := s.repos.Balances.GetByUserID(ctx, *fromUserID)
 			if err != nil && !isNotFoundError(err) {
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to get balance for rollback: %w", err)
 			}
 			if currentBalance != nil {
@@ -695,7 +695,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 
 				// Ensure amount is not negative (defensive check)
 				if newAmount < 0 {
-					s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+					_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 					return nil, fmt.Errorf("rollback would result in negative balance: current=%.2f, rollback_amount=%.2f",
 						currentBalance.Amount, originalTx.Amount)
 				}
@@ -706,7 +706,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 					Currency: originalTx.Currency,
 				}
 				if err := s.repos.Balances.Upsert(ctx, newBalance); err != nil {
-					s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+					_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 					return nil, fmt.Errorf("failed to rollback debit: %w", err)
 				}
 			}
@@ -717,7 +717,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 			// Debit the recipient (who was the original sender)
 			recipientBalance, err := s.repos.Balances.GetByUserID(ctx, *fromUserID)
 			if err != nil && !isNotFoundError(err) {
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to get recipient balance for rollback: %w", err)
 			}
 			if recipientBalance != nil {
@@ -725,7 +725,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 
 				// Ensure amount is not negative (defensive check)
 				if recipientNewAmount < 0 {
-					s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+					_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 					return nil, fmt.Errorf("transfer rollback would result in negative balance for recipient: current=%.2f, rollback_amount=%.2f",
 						recipientBalance.Amount, originalTx.Amount)
 				}
@@ -736,7 +736,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 					Currency: originalTx.Currency,
 				}
 				if err := s.repos.Balances.Upsert(ctx, recipientNewBalance); err != nil {
-					s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+					_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 					return nil, fmt.Errorf("failed to rollback transfer (debit recipient): %w", err)
 				}
 			}
@@ -746,9 +746,9 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 			if err != nil && !isNotFoundError(err) {
 				// Rollback the previous operation
 				if recipientBalance != nil {
-					s.repos.Balances.Upsert(ctx, recipientBalance)
+					_ = s.repos.Balances.Upsert(ctx, recipientBalance)
 				}
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to get sender balance for rollback: %w", err)
 			}
 			var senderNewAmount float64
@@ -762,9 +762,9 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 			if senderNewAmount < 0 {
 				// Rollback the previous operation
 				if recipientBalance != nil {
-					s.repos.Balances.Upsert(ctx, recipientBalance)
+					_ = s.repos.Balances.Upsert(ctx, recipientBalance)
 				}
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				currentAmount := 0.0
 				if senderBalance != nil {
 					currentAmount = senderBalance.Amount
@@ -781,9 +781,9 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 			if err := s.repos.Balances.Upsert(ctx, senderNewBalance); err != nil {
 				// Rollback the previous operation
 				if recipientBalance != nil {
-					s.repos.Balances.Upsert(ctx, recipientBalance)
+					_ = s.repos.Balances.Upsert(ctx, recipientBalance)
 				}
-				s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
+				_ = s.repos.Transactions.MarkFailed(ctx, rollbackTx.ID)
 				return nil, fmt.Errorf("failed to rollback transfer (credit sender): %w", err)
 			}
 		}
@@ -850,7 +850,7 @@ func (s *TransactionServiceImpl) rollbackTransaction(ctx context.Context, origin
 	}
 
 	// Log the rollback audit event
-	s.repos.Audit.Log(ctx, "transaction", rollbackTx.ID, "rollback", map[string]interface{}{
+	_ = s.repos.Audit.Log(ctx, "transaction", rollbackTx.ID, "rollback", map[string]interface{}{
 		"original_transaction_id": originalTx.ID,
 		"user_id":                 requestingUserID,
 		"amount":                  originalTx.Amount,

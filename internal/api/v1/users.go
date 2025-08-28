@@ -21,7 +21,7 @@ func (r *Router) handleGetUser(w http.ResponseWriter, req *http.Request) {
 		if userIDStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"User ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"User ID is required","code":400}`))
 			return
 		}
 
@@ -29,7 +29,7 @@ func (r *Router) handleGetUser(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
 			return
 		}
 
@@ -37,7 +37,7 @@ func (r *Router) handleGetUser(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error":"User not found","code":404}`))
+			_, _ = w.Write([]byte(`{"error":"User not found","code":404}`))
 			return
 		}
 
@@ -51,7 +51,7 @@ func (r *Router) handleGetUser(w http.ResponseWriter, req *http.Request) {
 			`","created_at":"` + user.CreatedAt.Format("2006-01-02T15:04:05Z07:00") +
 			`","updated_at":"` + user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00") + `"}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})))
 
 	finalHandler.ServeHTTP(w, req)
@@ -68,7 +68,7 @@ func (r *Router) handleUpdateUser(w http.ResponseWriter, req *http.Request) {
 		if userIDStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"User ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"User ID is required","code":400}`))
 			return
 		}
 
@@ -76,7 +76,7 @@ func (r *Router) handleUpdateUser(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
 			return
 		}
 
@@ -87,12 +87,12 @@ func (r *Router) handleUpdateUser(w http.ResponseWriter, req *http.Request) {
 				if err.Error() == "failed to get user: user not found" {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusNotFound)
-					w.Write([]byte(`{"error":"User not found","code":404}`))
+					_, _ = w.Write([]byte(`{"error":"User not found","code":404}`))
 					return
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Failed to update user","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Failed to update user","code":400}`))
 				return
 			}
 
@@ -107,7 +107,7 @@ func (r *Router) handleUpdateUser(w http.ResponseWriter, req *http.Request) {
 				`","updated_at":"` + user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00") +
 				`","is_active":` + strconv.FormatBool(user.IsActive) + `}`
 
-			w.Write([]byte(response))
+			_, _ = w.Write([]byte(response))
 		})
 
 		handler.ServeHTTP(w, req)
@@ -127,7 +127,7 @@ func (r *Router) handleDeleteUser(w http.ResponseWriter, req *http.Request) {
 		if userIDStr == "" {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"User ID is required","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"User ID is required","code":400}`))
 			return
 		}
 
@@ -135,7 +135,7 @@ func (r *Router) handleDeleteUser(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid user ID format","code":400}`))
 			return
 		}
 
@@ -145,24 +145,24 @@ func (r *Router) handleDeleteUser(w http.ResponseWriter, req *http.Request) {
 			case "failed to get user: user not found", "failed to delete user: user not found", "user not found: user not found or already inactive":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(`{"error":"User not found","code":404}`))
+				_, _ = w.Write([]byte(`{"error":"User not found","code":404}`))
 				return
 			case "user cannot be deleted: associated transactions exist":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict) // 409 Conflict
-				w.Write([]byte(`{"error":"User cannot be deleted: associated transactions exist","code":409}`))
+				_, _ = w.Write([]byte(`{"error":"User cannot be deleted: associated transactions exist","code":409}`))
 				return
 			default:
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"error":"Failed to delete user : ` + err.Error() + `","code":500}`))
+				_, _ = w.Write([]byte(`{"error":"Failed to delete user : ` + err.Error() + `","code":500}`))
 				return
 			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message":"User is deleted"}`))
+		_, _ = w.Write([]byte(`{"message":"User is deleted"}`))
 	})))
 
 	finalHandler.ServeHTTP(w, req)

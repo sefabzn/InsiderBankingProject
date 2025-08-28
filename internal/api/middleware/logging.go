@@ -11,6 +11,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// contextKey represents a context key type
+type contextKey string
+
+// requestIDKey is the context key for request ID
+const requestIDKey contextKey = "request_id"
+
 // MetricsMiddleware creates middleware that records HTTP request metrics.
 func MetricsMiddleware(metricsCollector *utils.MetricsCollector) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -50,7 +56,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 
 		// Add request ID to request context for downstream use
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, "request_id", requestID)
+		ctx = context.WithValue(ctx, requestIDKey, requestID)
 		r = r.WithContext(ctx)
 
 		// Call the next handler
@@ -75,7 +81,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 }
 
 // TracingMiddleware adds distributed tracing support with trace ID in headers.
-func TracingMiddleware(serviceName string) func(http.Handler) http.Handler {
+func TracingMiddleware(_ string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Get current span context

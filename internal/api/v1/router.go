@@ -70,10 +70,10 @@ func (r *Router) RegisterRoutes(mux *http.ServeMux) {
 }
 
 // handlePing responds to ping requests for testing connectivity.
-func (r *Router) handlePing(w http.ResponseWriter, req *http.Request) {
+func (r *Router) handlePing(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message":"pong"}`))
+	_, _ = w.Write([]byte(`{"message":"pong"}`))
 }
 
 // handleRegister handles user registration.
@@ -90,17 +90,17 @@ func (r *Router) handleRegister(w http.ResponseWriter, req *http.Request) {
 			case err.Error() == "email already registered":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte(`{"error":"Email already registered","code":409}`))
+				_, _ = w.Write([]byte(`{"error":"Email already registered","code":409}`))
 				return
 			case err.Error() == "username already taken":
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
-				w.Write([]byte(`{"error":"Username already taken","code":409}`))
+				_, _ = w.Write([]byte(`{"error":"Username already taken","code":409}`))
 				return
 			default:
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Registration failed","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Registration failed","code":400}`))
 				return
 			}
 		}
@@ -118,7 +118,7 @@ func (r *Router) handleRegister(w http.ResponseWriter, req *http.Request) {
 			`","updated_at":"` + userResponse.UpdatedAt.Format("2006-01-02T15:04:05Z07:00") +
 			`","is_active":` + strconv.FormatBool(userResponse.IsActive) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})
 
 	handler.ServeHTTP(w, req)
@@ -134,7 +134,7 @@ func (r *Router) handleLogin(w http.ResponseWriter, req *http.Request) {
 			// Return 401 for authentication failures
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"Invalid email or password","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid email or password","code":401}`))
 			return
 		}
 
@@ -143,7 +143,7 @@ func (r *Router) handleLogin(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
 		// Convert to JSON manually for precise control
-		userJson := `{"id":"` + loginResponse.User.ID.String() +
+		userJSON := `{"id":"` + loginResponse.User.ID.String() +
 			`","username":"` + loginResponse.User.Username +
 			`","email":"` + loginResponse.User.Email +
 			`","role":"` + loginResponse.User.Role +
@@ -151,12 +151,12 @@ func (r *Router) handleLogin(w http.ResponseWriter, req *http.Request) {
 			`","updated_at":"` + loginResponse.User.UpdatedAt.Format("2006-01-02T15:04:05Z07:00") +
 			`","is_active":` + strconv.FormatBool(loginResponse.User.IsActive) + `}`
 
-		response := `{"user":` + userJson +
+		response := `{"user":` + userJSON +
 			`,"access_token":"` + loginResponse.AccessToken +
 			`","refresh_token":"` + loginResponse.RefreshToken +
 			`","expires_in":` + fmt.Sprintf("%d", loginResponse.ExpiresIn) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})
 
 	handler.ServeHTTP(w, req)
@@ -183,7 +183,7 @@ func (r *Router) handleListUsers(w http.ResponseWriter, req *http.Request) {
 			} else if parsedLimit < 0 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Limit must be non-negative","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Limit must be non-negative","code":400}`))
 				return
 			}
 		}
@@ -194,7 +194,7 @@ func (r *Router) handleListUsers(w http.ResponseWriter, req *http.Request) {
 			} else if parsedOffset < 0 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(`{"error":"Offset must be non-negative","code":400}`))
+				_, _ = w.Write([]byte(`{"error":"Offset must be non-negative","code":400}`))
 				return
 			}
 		}
@@ -204,7 +204,7 @@ func (r *Router) handleListUsers(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"Failed to list users","code":500}`))
+			_, _ = w.Write([]byte(`{"error":"Failed to list users","code":500}`))
 			return
 		}
 
@@ -228,7 +228,7 @@ func (r *Router) handleListUsers(w http.ResponseWriter, req *http.Request) {
 		}
 		response += `],"limit":` + strconv.Itoa(limit) + `,"offset":` + strconv.Itoa(offset) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})))
 
 	finalHandler.ServeHTTP(w, req)
@@ -243,7 +243,7 @@ func (r *Router) handleRefresh(w http.ResponseWriter, req *http.Request) {
 			// Return 401 for invalid refresh tokens
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"Invalid refresh token","code":401}`))
+			_, _ = w.Write([]byte(`{"error":"Invalid refresh token","code":401}`))
 			return
 		}
 
@@ -255,7 +255,7 @@ func (r *Router) handleRefresh(w http.ResponseWriter, req *http.Request) {
 		response := `{"access_token":"` + tokenResponse.AccessToken +
 			`","expires_in":` + fmt.Sprintf("%d", tokenResponse.ExpiresIn) + `}`
 
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})
 
 	handler.ServeHTTP(w, req)
@@ -268,7 +268,7 @@ func (r *Router) handleTestGetAllUsers(w http.ResponseWriter, req *http.Request)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error":"Failed to retrieve users","code":500}`))
+		_, _ = w.Write([]byte(`{"error":"Failed to retrieve users","code":500}`))
 		return
 	}
 
@@ -292,5 +292,5 @@ func (r *Router) handleTestGetAllUsers(w http.ResponseWriter, req *http.Request)
 	}
 	response += `],"total":` + fmt.Sprintf("%d", len(users)) + `}`
 
-	w.Write([]byte(response))
+	_, _ = w.Write([]byte(response))
 }

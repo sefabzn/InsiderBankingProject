@@ -32,14 +32,14 @@ func TestAuthMiddleware(t *testing.T) {
 		claims, ok := GetUserFromContext(r.Context())
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("no user in context"))
+			_, _ = w.Write([]byte("no user in context"))
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
 		response := fmt.Sprintf(`{"user_id":"%s","username":"%s","email":"%s","role":"%s"}`,
 			claims.UserID, claims.Username, claims.Email, claims.Role)
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	})
 
 	// Wrap with auth middleware
@@ -135,10 +135,10 @@ func TestOptionalAuthMiddleware(t *testing.T) {
 		claims, ok := GetUserFromContext(r.Context())
 		if ok {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"authenticated":true,"user_id":"` + claims.UserID.String() + `"}`))
+			_, _ = w.Write([]byte(`{"authenticated":true,"user_id":"` + claims.UserID.String() + `"}`))
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"authenticated":false}`))
+			_, _ = w.Write([]byte(`{"authenticated":false}`))
 		}
 	})
 
@@ -199,9 +199,9 @@ func TestOptionalAuthMiddleware(t *testing.T) {
 
 func TestRequireUser(t *testing.T) {
 	// Create test handler
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("success"))
+		_, _ = w.Write([]byte("success"))
 	})
 
 	// Wrap with RequireUser middleware
