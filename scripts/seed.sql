@@ -3,8 +3,8 @@
 
 -- Insert test users (using bcrypt hash for password "password123")
 INSERT INTO users (id, username, email, password_hash, role) VALUES 
-    ('550e8400-e29b-41d4-a716-446655440001', 'sefa', 'alice@example.com', '$2a$10$NSUEiKj7S5rACb22wwf2B.dhevBO0hI9CJgtYVSDCRRVHlb5oKoO2', 'user'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'kerem', 'bob@example.com', '$2a$10$NSUEiKj7S5rACb22wwf2B.dhevBO0hI9CJgtYVSDCRRVHlb5oKoO2', 'user'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'sefa', 'sefa@example.com', '$2a$10$NSUEiKj7S5rACb22wwf2B.dhevBO0hI9CJgtYVSDCRRVHlb5oKoO2', 'user'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'kerem', 'kerem@example.com', '$2a$10$NSUEiKj7S5rACb22wwf2B.dhevBO0hI9CJgtYVSDCRRVHlb5oKoO2', 'user'),
     ('550e8400-e29b-41d4-a716-446655440003', 'admin', 'admin@example.com', '$2a$10$NSUEiKj7S5rACb22wwf2B.dhevBO0hI9CJgtYVSDCRRVHlb5oKoO2', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
