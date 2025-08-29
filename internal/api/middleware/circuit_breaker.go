@@ -31,6 +31,12 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 				return
 			}
 
+			// Wrap the response writer to capture errors
+			wrapper := &responseWriterWrapper{
+				ResponseWriter: w,
+				statusCode:     200, // Default status
+			}
+
 			// Create a context that can be cancelled if circuit breaker opens
 			ctx, cancel := context.WithCancel(r.Context())
 			defer cancel()
@@ -41,7 +47,12 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 				newReq := r.WithContext(callCtx)
 
 				// Call the next handler
-				next.ServeHTTP(w, newReq)
+				next.ServeHTTP(wrapper, newReq)
+
+				// Check if the response indicates a failure (5xx status codes)
+				if wrapper.statusCode >= 500 {
+					return fmt.Errorf("upstream service error: %d", wrapper.statusCode)
+				}
 				return nil
 			})
 
@@ -53,11 +64,26 @@ func CircuitBreakerMiddleware(serviceName string, failureThreshold int32, resetT
 					_, _ = w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s","state":"%s"}`, serviceName, cbErr.State)))
 					return
 				}
-				// Other error - this would have been handled by the circuit breaker already
+				// Other error - log it and return 503
+				utils.Error("circuit breaker call failed", "error", err.Error(), "service", serviceName)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = w.Write([]byte(fmt.Sprintf(`{"error":"Service temporarily unavailable","code":503,"service":"%s"}`, serviceName)))
 				return
 			}
 		})
 	}
+}
+
+// responseWriterWrapper wraps http.ResponseWriter to capture status codes
+type responseWriterWrapper struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *responseWriterWrapper) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
 }
 
 // CircuitBreakerMetricsHandler provides circuit breaker metrics endpoint

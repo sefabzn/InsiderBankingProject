@@ -3,10 +3,57 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 )
+
+// CircuitBreakerTestHelper provides test utilities for circuit breaker testing
+type CircuitBreakerTestHelper struct{}
+
+// NewCircuitBreakerTestHelper creates a new test helper
+func NewCircuitBreakerTestHelper() *CircuitBreakerTestHelper {
+	return &CircuitBreakerTestHelper{}
+}
+
+// SimulateMultipleFailures simulates multiple failures to test circuit breaker opening
+func (h *CircuitBreakerTestHelper) SimulateMultipleFailures(serviceName string, count int) error {
+	config := CircuitBreakerConfig{
+		Name:             serviceName,
+		FailureThreshold: 3, // Open after 3 failures
+		ResetTimeout:     5 * time.Second,
+		CallTimeout:      1 * time.Second,
+	}
+
+	breaker := GetCircuitBreaker(serviceName, config)
+
+	for i := 0; i < count; i++ {
+		err := breaker.Call(context.Background(), func(_ context.Context) error {
+			return fmt.Errorf("simulated failure %d", i+1)
+		})
+		if err != nil && i < count-1 { // Don't return error on last attempt
+			continue
+		}
+	}
+	return nil
+}
+
+// WaitForCircuitBreakerState waits for circuit breaker to reach a specific state
+func (h *CircuitBreakerTestHelper) WaitForCircuitBreakerState(serviceName string, expectedState CircuitBreakerState, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		if breaker := globalRegistry.breakers[serviceName]; breaker != nil {
+			if breaker.GetState() == expectedState {
+				return nil
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return fmt.Errorf("timeout waiting for circuit breaker %s to reach state %s", serviceName, expectedState)
+}
 
 // CircuitBreakerState represents the current state of the circuit breaker
 type CircuitBreakerState int32

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/sefa-b/go-banking-sim/internal/api/middleware"
 	"github.com/sefa-b/go-banking-sim/internal/auth"
@@ -38,10 +39,13 @@ func (r *Router) RegisterRoutes(mux *http.ServeMux) {
 	// Test endpoint to retrieve all users (no validation)
 	mux.HandleFunc("GET /api/v1/test/users", r.handleTestGetAllUsers)
 
-	// Auth routes
-	mux.HandleFunc("POST /api/v1/auth/register", r.handleRegister)
-	mux.HandleFunc("POST /api/v1/auth/login", r.handleLogin)
-	mux.HandleFunc("POST /api/v1/auth/refresh", r.handleRefresh)
+	// Circuit breaker test endpoints (registered in main.go with middleware)
+
+	// Auth routes with rate limiting (5 requests per minute)
+	rateLimitedAuth := middleware.RateLimitMiddleware(r.services.Cache, 5, time.Minute)
+	mux.Handle("POST /api/v1/auth/register", rateLimitedAuth(http.HandlerFunc(r.handleRegister)))
+	mux.Handle("POST /api/v1/auth/login", rateLimitedAuth(http.HandlerFunc(r.handleLogin)))
+	mux.Handle("POST /api/v1/auth/refresh", rateLimitedAuth(http.HandlerFunc(r.handleRefresh)))
 
 	// User routes (admin only)
 	mux.HandleFunc("GET /api/v1/users", r.handleListUsers)
@@ -293,4 +297,27 @@ func (r *Router) handleTestGetAllUsers(w http.ResponseWriter, req *http.Request)
 	response += `],"total":` + fmt.Sprintf("%d", len(users)) + `}`
 
 	_, _ = w.Write([]byte(response))
+}
+
+// HandleCircuitBreakerSuccess handles a successful circuit breaker test endpoint
+func (r *Router) HandleCircuitBreakerSuccess(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"message":"Circuit breaker test - success","status":"ok"}`))
+}
+
+// HandleCircuitBreakerFailure handles a failing circuit breaker test endpoint
+func (r *Router) HandleCircuitBreakerFailure(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	_, _ = w.Write([]byte(`{"error":"Circuit breaker test - simulated failure","code":500}`))
+}
+
+// HandleCircuitBreakerTimeout handles a timeout circuit breaker test endpoint
+func (r *Router) HandleCircuitBreakerTimeout(w http.ResponseWriter, _ *http.Request) {
+	// Simulate a timeout by sleeping
+	time.Sleep(35 * time.Second) // Longer than circuit breaker timeout
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"message":"Circuit breaker test - timeout","status":"ok"}`))
 }

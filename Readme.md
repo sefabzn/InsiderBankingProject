@@ -43,27 +43,15 @@ git clone <your-repo-url>
 cd InsiderProject2
 ```
 
-### Step 2: Environment Setup (optional)
+### Step 2: Environment Setup
 ```bash
 # Copy and configure environment (optional - defaults will work)
 cp .env.example .env  # If you have this file
-# EXAMPLE .ENV FILE
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_URL` | `postgres://postgres:postgres@db:5432/banking_sim?sslmode=disable` | PostgreSQL connection string |
-| `JWT_SECRET` | `your-super-secret-jwt-key-change-in-production` | JWT signing secret |
-| `PORT` | `8080` | Application port |
-| `ENV` | `dev` | Environment (dev/prod) |
-| `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
-
-# EXAMPLE .ENV FILE
 ```
 
-### Step 3: Launch All Services (RECOMMENDED)
+### Step 3: Launch All Services
 ```bash
-#make a build (optional)
-docker-compose -f docker-compose.dev.yml build
+docker compose -f docker-compose.dev.yml build
 # Start all services (PostgreSQL, Redis, App, Nginx, Monitoring)
 docker compose -f docker-compose.dev.yml up -d
 ```
@@ -94,7 +82,7 @@ docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim
 ### Step 6: Seed Initial Data (Optional)
 ```bash
 # Load seed data
-docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim -f /seed.sql
+docker compose -f docker-compose.dev.yml exec db psql -U postgres -d banking_sim -f /scripts/seed.sql
 ```
 
 ### Step 7: Verify API is Working
@@ -186,7 +174,7 @@ The system uses **9 migration files** creating these core tables:
 - **Worker Pools** - Async transaction processing
 - **Redis Caching** - Hot data caching
 - **Database Replication** - Primary-replica setup
-- **Circuit Breakers** - Fault tolerance
+- **Circuit Breakers** - Fault tolerance with automatic failure detection
 - **Rate Limiting** - Request throttling
 - **Connection Pooling** - Database connection management
 
@@ -240,7 +228,7 @@ The system uses **9 migration files** creating these core tables:
 |--------|----------|-------------|---------------|
 | `GET` | `/balances/current` | Get current balance | ✅ |
 | `GET` | `/balances/historical` | Get balance history | ✅ |
-| `GET` | `/balances/at-time?timestamp=...` | Get balance at specific time | ✅ | (#IMPORTANT NOTE = the timestamp might be gmt + 0)
+| `GET` | `/balances/at-time?timestamp=...` | Get balance at specific time | ✅ |
 
 ### 💸 Transaction Endpoints
 
@@ -269,7 +257,327 @@ The system uses **9 migration files** creating these core tables:
 | `GET` | `/healthz` | Health check | ❌ |
 | `GET` | `/metrics` | Prometheus metrics | ❌ |
 | `GET` | `/metrics/basic` | Basic metrics (JSON) | ❌ |
-| `GET` | `/metrics/circuit-breakers` | Circuit breaker status | ❌ |
+| `GET` | `/api/v1/metrics/circuit-breakers` | Circuit breaker status | ❌ |
+
+### 🛡️ Circuit Breaker Test Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/v1/test/circuit-breaker/success` | Test successful requests | ❌ |
+| `GET` | `/api/v1/test/circuit-breaker/failure` | Test failure handling | ❌ |
+| `GET` | `/api/v1/test/circuit-breaker/timeout` | Test timeout handling | ❌ |
+
+---
+
+## 🛡️ Circuit Breaker Testing Guide
+
+Circuit breakers protect your API from cascading failures by automatically stopping requests to failing services. When a service fails repeatedly, the circuit breaker "opens" and rejects subsequent requests immediately, preventing system overload.
+
+### How Circuit Breakers Work
+
+1. **Closed State**: Normal operation - requests pass through
+2. **Open State**: Service is failing - requests are rejected immediately with 503 status
+3. **Half-Open State**: Testing recovery - allows limited requests to check if service recovered
+
+### Circuit Breaker Configuration
+
+Each service has configurable thresholds:
+- **Failure Threshold**: Number of failures before opening (default: 2-5 failures)
+- **Reset Timeout**: Time to wait before testing recovery (default: 10-60 seconds)
+- **Call Timeout**: Maximum time for individual requests (default: 30 seconds)
+
+### Testing Circuit Breaker Behavior
+
+#### 1. Monitor Circuit Breaker Status
+```bash
+# Check all circuit breakers status
+curl http://localhost:8080/api/v1/metrics/circuit-breakers
+
+# Expected response:
+{
+  "circuit_breakers": {
+    "test-success-service": {
+      "state": "closed",
+      "total_requests": 0,
+      "total_failures": 0,
+      "total_successes": 0,
+      "current_failures": 0
+    },
+    "test-failure-service": {
+      "state": "closed",
+      "total_requests": 0,
+      "total_failures": 0,
+      "total_successes": 0,
+      "current_failures": 0
+    },
+    "test-timeout-service": {
+      "state": "closed",
+      "total_requests": 0,
+      "total_failures": 0,
+      "total_successes": 0,
+      "current_failures": 0
+    }
+  }
+}
+```
+
+#### 2. Test Successful Requests
+```bash
+# This should always work and keep circuit breaker closed
+curl http://localhost:8080/api/v1/test/circuit-breaker/success
+
+# Expected response:
+{"message":"Circuit breaker test - success","status":"ok"}
+```
+
+#### 3. Test Failure Handling
+```bash
+# First request - will fail but circuit breaker stays closed
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+
+# Expected response:
+{"error":"Circuit breaker test - simulated failure","code":500}
+
+# Second request - circuit breaker opens after 2 failures
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+
+# Expected response:
+{"error":"Service temporarily unavailable","code":503,"service":"test-failure-service"}
+```
+
+#### 4. Verify Circuit Breaker Opened
+```bash
+# Check status - should now be "open"
+curl http://localhost:8080/api/v1/metrics/circuit-breakers
+
+# Expected: test-failure-service state = "open"
+```
+
+#### 5. Test Fast-Fail Behavior
+```bash
+# Additional requests while open - all return 503 immediately
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+
+# Expected response (immediate):
+{"error":"Service temporarily unavailable","code":503,"service":"test-failure-service"}
+```
+
+#### 6. Test Recovery (Half-Open State)
+```bash
+# Wait ~10 seconds for reset timeout
+sleep 10
+
+# Circuit breaker enters half-open state and allows one test request
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+
+# If the service recovered: circuit closes, request succeeds
+# If still failing: circuit stays open, request fails
+```
+
+### Circuit Breaker Metrics Explained
+
+| Metric | Description |
+|--------|-------------|
+| `state` | Current state: "closed", "open", or "half-open" |
+| `total_requests` | Total number of requests made |
+| `total_failures` | Total number of failed requests |
+| `total_successes` | Total number of successful requests |
+| `current_failures` | Current consecutive failure count |
+
+### Testing with Different Configurations
+
+#### Low Threshold (Opens Quickly)
+```bash
+# Circuit breaker opens after just 1 failure
+curl -X POST http://localhost:8080/api/v1/test/circuit-breaker/failure
+# Opens immediately after first failure
+```
+
+#### High Threshold (More Tolerant)
+```bash
+# Would need 5 failures to open (if configured)
+# Useful for services with occasional failures
+```
+
+### Production Circuit Breaker Usage
+
+In production, circuit breakers protect critical external services:
+
+```bash
+# Example: External payment service
+curl http://localhost:8080/api/v1/transactions/credit
+
+# If external payment service fails repeatedly:
+# 1. Circuit breaker opens after threshold
+# 2. All payment requests return 503 immediately
+# 3. System remains stable, no cascading failures
+# 4. Manual intervention or automatic recovery possible
+```
+
+### Best Practices
+
+1. **Monitor Circuit Breaker States** - Set up alerts when breakers open
+2. **Configure Appropriate Thresholds** - Balance between protection and availability
+3. **Test Failure Scenarios** - Regularly test circuit breaker behavior
+4. **Implement Fallbacks** - Have alternative paths when services are unavailable
+5. **Log Circuit Breaker Events** - Track when breakers open/close for analysis
+
+---
+
+## 🔴 Redis Cache Testing Guide
+
+### Overview
+The Postman collection includes a dedicated **"🔴 REDIS CACHE TESTING"** folder with comprehensive Redis cache testing scenarios. This section tests:
+
+- **Cache Hits/Misses** - Verify data is served from Redis cache
+- **Cache Invalidation** - Test that updates clear relevant caches
+- **Rate Limiting** - Test Redis-based rate limiting functionality
+- **Cache Warm-up** - Test automatic cache population after invalidation
+- **Performance Testing** - Measure cache vs database response times
+
+### Cache TTL Configuration
+- **Users**: 30 minutes
+- **Balances**: 10 minutes
+- **Transactions**: 15 minutes
+- **Rate Limits**: 1 minute
+
+### Redis Testing Workflow
+
+#### Step 1: Setup & Authentication
+1. **Login** with admin credentials to get access token
+2. **Set Variables**:
+   - `{{IdToGet}}` - User ID to test cache hits
+   - `{{idToUpdateUser}}` - User ID for update testing
+   - `{{TransactionId}}` - Transaction ID for testing
+
+#### Step 2: Test Cache Statistics
+```bash
+GET {{base_url}}/metrics/basic
+```
+- Shows current cache statistics
+- Displays Redis connection status
+- Includes rate limiting counters
+
+#### Step 3: Test User Cache Behavior
+1. **First Request** (Cache Miss):
+   ```bash
+   GET {{base_url}}/users/{{IdToGet}}
+   Authorization: Bearer {{accessToken}}
+   ```
+   - Hits database, caches result
+   - Expected: ~50-200ms response time
+
+2. **Second Request** (Cache Hit):
+   ```bash
+   GET {{base_url}}/users/{{IdToGet}}
+   Authorization: Bearer {{accessToken}}
+   ```
+   - Serves from Redis cache
+   - Expected: <10ms response time ⚡
+
+#### Step 4: Test Cache Invalidation
+1. **Update User**:
+   ```bash
+   PUT {{base_url}}/users/{{idToUpdateUser}}
+   Authorization: Bearer {{accessToken}}
+   {
+       "username": "cache_test_user",
+       "email": "cache.test@example.com"
+   }
+   ```
+   - Invalidates user cache
+
+2. **Verify Invalidation**:
+   ```bash
+   GET {{base_url}}/users/{{idToUpdateUser}}
+   Authorization: Bearer {{accessToken}}
+   ```
+   - Should hit database again (slower response)
+
+#### Step 5: Test Balance Cache
+```bash
+GET {{base_url}}/balances/current
+Authorization: Bearer {{accessToken}}
+```
+- Balance cached with 10-minute TTL
+- Multiple requests should be fast after first call
+
+#### Step 6: Test Transaction Cache
+```bash
+GET {{base_url}}/transactions/{{TransactionId}}
+Authorization: Bearer {{accessToken}}
+```
+- Transaction cached with 15-minute TTL
+- Subsequent requests serve from cache
+
+#### Step 7: Test Rate Limiting
+Run the **"Test Rate Limiting"** request multiple times:
+```bash
+POST {{base_url}}/auth/login
+# Run 6+ times rapidly
+```
+- First 5 requests: ✅ 200 OK
+- 6th request: ❌ 429 Rate Limited
+- Wait 1 minute or reset counter
+
+#### Step 8: Test Cache Warm-up
+1. **Create Credit Transaction**:
+   ```bash
+   POST {{base_url}}/transactions/credit
+   Authorization: Bearer {{accessToken}}
+   {
+       "amount": 50.00,
+       "currency": "USD"
+   }
+   ```
+   - Invalidates balance cache
+
+2. **Check Balance Again**:
+   ```bash
+   GET {{base_url}}/balances/current
+   Authorization: Bearer {{accessToken}}
+   ```
+   - Hits database, recaches updated balance
+
+### Performance Testing
+
+#### Cache Performance Measurement
+Run balance requests multiple times and observe response times:
+- **First request**: Database hit (~50-200ms) 🐌
+- **Subsequent requests**: Cache hits (<10ms) 🚀
+
+#### Cache Hit Indicators
+- Response time < 10ms = Likely cache hit
+- Response time 10-100ms = Possible cache hit
+- Response time > 100ms = Likely database hit
+
+### Expected Test Results
+
+| Test Scenario | Expected Behavior | Success Indicators |
+|---------------|-------------------|-------------------|
+| Cache Hit | Fast response (<10ms) | ⚡ Sub-10ms response |
+| Cache Miss | Slower response | 🐌 50-200ms response |
+| Cache Invalidation | Next request slow | Cache cleared, DB hit |
+| Rate Limiting | 429 after threshold | 5/5 → 429 on 6th |
+| Cache Warm-up | Fast after invalidation | Auto-recaching works |
+
+### Troubleshooting Cache Tests
+
+#### Cache Not Working
+- Check Redis connection: `docker logs insiderproject2-redis-1`
+- Verify cache service injection: Check application logs
+- Test Redis directly: `docker exec insiderproject2-redis-1 redis-cli ping`
+
+#### Rate Limiting Not Working
+- Check rate limit counters: `GET /metrics/basic`
+- Verify middleware is applied: Check router logs
+- Test with different IPs if needed
+
+#### Slow Responses
+- Database connection issues
+- Redis connection problems
+- High server load
+- Network latency
 
 ---
 
@@ -279,7 +587,7 @@ The system uses **9 migration files** creating these core tables:
 1. Open Postman
 2. Import `INSIDERPROJECT.postman_collection.json`
 3. Set environment variable:
-   - `base_url` = `http://localhost:8080/api/v1`
+   - `base_url` = `http://localhost:8080`
 
 ### Test Flow Example
 
@@ -361,6 +669,7 @@ Authorization: Bearer {{accessToken}}
 - **System Metrics**: Goroutines, memory usage, queue depths
 - **Database Metrics**: Connection pool status, query performance
 - **Worker Pool Metrics**: Active workers, queued jobs, processing times
+- **Circuit Breaker Metrics**: Service states, failure counts, recovery status
 
 ---
 
@@ -459,6 +768,22 @@ netstat -tulpn | grep -E ':(8080|5432|6379|9090|3000|16686)'
 # Stop conflicting services or change ports in docker-compose.dev.yml
 ```
 
+#### 6. Circuit Breaker Issues
+```bash
+# Check circuit breaker status
+curl http://localhost:8080/api/v1/metrics/circuit-breakers
+
+# Reset circuit breaker state (requires application restart)
+docker compose -f docker-compose.dev.yml restart app
+
+# Test circuit breaker behavior
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+curl http://localhost:8080/api/v1/test/circuit-breaker/success
+
+# Monitor circuit breaker logs
+docker compose -f docker-compose.dev.yml logs app | grep -i circuit
+```
+
 ### Useful Commands
 
 #### Docker Management
@@ -502,10 +827,40 @@ curl http://localhost:8080/metrics/basic
 
 # Circuit breaker status
 curl http://localhost:8080/api/v1/metrics/circuit-breakers
+
+# Circuit breaker testing
+curl http://localhost:8080/api/v1/test/circuit-breaker/success
+curl http://localhost:8080/api/v1/test/circuit-breaker/failure
+curl http://localhost:8080/api/v1/test/circuit-breaker/timeout
+
+# Test circuit breaker opening (run multiple times)
+for i in {1..3}; do curl http://localhost:8080/api/v1/test/circuit-breaker/failure; done
 ```
 
 ---
 
+## 🎯 Next Steps
+
+### For Development
+1. **Explore the API** using Postman collection
+2. **Monitor Performance** via Grafana dashboards
+3. **Trace Requests** using Jaeger
+4. **Review Logs** for debugging and insights
+
+### For Production
+1. **Security Hardening** - Change default secrets, configure TLS
+2. **Scaling** - Add more app replicas, configure load balancing
+3. **Backup Strategy** - Set up automated database backups
+4. **Monitoring Alerts** - Configure alerting rules in Prometheus
+
+### Advanced Features to Explore
+- **Circuit Breaker Testing** - Test fault tolerance with `/api/v1/test/circuit-breaker/*` endpoints
+- **Event Sourcing** - Review the events table and projector workers
+- **Scheduled Transactions** - Create and monitor future transactions
+- **Multi-Currency** - Test with different currencies
+- **Audit Trails** - Review complete operation history
+
+---
 
 **🎉 Your Go Banking Simulation API is now fully operational!**
 

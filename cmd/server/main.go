@@ -106,7 +106,7 @@ func main() {
 
 	// Initialize distributed tracing
 	ctx := context.Background()
-	shutdownTracer, err := utils.InitTracer(ctx, "go-banking-sim", "1.0.0", "jaeger:14250")
+	shutdownTracer, err := utils.InitTracer(ctx, "go-banking-sim", "1.0.0", "jaeger:4317")
 	if err != nil {
 		utils.Error("failed to initialize tracer", "error", err.Error())
 		os.Exit(1)
@@ -267,6 +267,17 @@ func main() {
 	if repos != nil && services != nil {
 		apiRouter := v1.NewRouter(repos, services, jwtManager)
 		apiRouter.RegisterRoutes(mux)
+
+		// Apply circuit breaker middleware to test endpoints
+		mux.Handle("GET /api/v1/test/circuit-breaker/success",
+			middleware.CircuitBreakerMiddleware("test-success-service", 3, 10*time.Second)(
+				http.HandlerFunc(apiRouter.HandleCircuitBreakerSuccess)))
+		mux.Handle("GET /api/v1/test/circuit-breaker/failure",
+			middleware.CircuitBreakerMiddleware("test-failure-service", 2, 10*time.Second)(
+				http.HandlerFunc(apiRouter.HandleCircuitBreakerFailure)))
+		mux.Handle("GET /api/v1/test/circuit-breaker/timeout",
+			middleware.CircuitBreakerMiddleware("test-timeout-service", 2, 10*time.Second)(
+				http.HandlerFunc(apiRouter.HandleCircuitBreakerTimeout)))
 	} else {
 		utils.Warn("skipping API routes registration due to missing database")
 	}

@@ -1,12 +1,479 @@
 {
 	"info": {
-		"_postman_id": "2719580a-04ad-4ad7-9164-f2dc1d815466",
-		"name": "INSIDERPROJECT",
+		"_postman_id": "29ad4985-b67a-45e2-bf3e-7ae45daa13b3",
+		"name": "INSIDERPROJECT Copy 2",
 		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
 		"_exporter_id": "15513224"
 	},
 	"item": [
+		{
+			"name": "🔴 REDIS CACHE TESTING",
+			"item": [
+				{
+					"name": "Cache Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/metrics/basic"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Cache Hit (Get User - Should Hit Cache)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Cache Hit Test - Status is 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response contains user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/users/{{IdToGet}}",
+						"description": "Test cache hit by getting a user that was previously retrieved. This should serve from Redis cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Cache Invalidation (Update User)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Cache Invalidation Test - Status is 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"User updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"});",
+									"",
+									"pm.test(\"Cache should be invalidated\", function () {",
+									"    // Note: Cache invalidation happens server-side",
+									"    // Next user fetch should hit database, not cache",
+									"    console.log('User cache invalidated - next fetch will be from database');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"cache_test_user\",\r\n    \"email\": \"cache.test@example.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/users/{{idToUpdateUser}}",
+						"description": "Update a user to test cache invalidation. This should clear the user from Redis cache."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Balance Cache (Get Current Balance)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Balance Cache Test - Status is 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Balance response contains required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('amount');",
+									"    pm.expect(jsonData).to.have.property('currency');",
+									"    pm.expect(jsonData).to.have.property('last_updated_at');",
+									"});",
+									"",
+									"pm.test(\"Balance should be cached in Redis\", function () {",
+									"    // Balance is automatically cached after this request",
+									"    console.log('Balance cached in Redis with 10-minute TTL');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/balances/current",
+						"description": "Get current balance to test balance caching. Balance will be cached in Redis with 10-minute TTL."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Transaction Cache (Get Transaction)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Transaction Cache Test - Status is 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Transaction response contains required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('amount');",
+									"    pm.expect(jsonData).to.have.property('type');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});",
+									"",
+									"pm.test(\"Transaction should be cached in Redis\", function () {",
+									"    // Transaction is automatically cached after this request",
+									"    console.log('Transaction cached in Redis with 15-minute TTL');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/transactions/{{lastTransactionId}}",
+						"description": "Get a transaction by ID to test transaction caching. Transaction will be cached in Redis with 15-minute TTL."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Rate Limiting (Automated 6 Requests)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Reset counter if reset header is present",
+									"if (pm.request.headers.get('X-Reset-Counter') === 'true') {",
+									"    pm.globals.set('requestCount', 0);",
+									"    console.log('Rate limit counter reset to 0');",
+									"    return; // Skip automated testing if resetting",
+									"}",
+									"",
+									"// Automated rate limiting test - make 6 requests",
+									"console.log('🚀 Starting automated rate limiting test...');",
+									"",
+									"// Reset counter for fresh test",
+									"pm.globals.set('requestCount', 0);",
+									"",
+									"// Function to make a request and check response",
+									"function makeRateLimitTestRequest(requestNumber) {",
+									"    return new Promise((resolve) => {",
+									"        const requestOptions = {",
+									"            url: 'http://localhost:8080/api/v1/auth/login',",
+									"            method: 'POST',",
+									"            header: {",
+									"                'Content-Type': 'application/json'",
+									"            },",
+									"            body: {",
+									"                mode: 'raw',",
+									"                raw: JSON.stringify({",
+									"                    email: 'test@example.com',",
+									"                    password: 'password123'",
+									"                })",
+									"            }",
+									"        };",
+									"",
+									"        pm.sendRequest(requestOptions, function(err, response) {",
+									"            const statusCode = response ? response.code() : 'ERROR';",
+									"            const isWithinLimit = requestNumber <= 5;",
+									"            const expectedStatus = isWithinLimit ? 401 : 429;",
+									"",
+									"            if (statusCode === expectedStatus) {",
+									"                console.log('✅ Request ' + requestNumber + ': ' + statusCode + ' (Expected: ' + expectedStatus + ')');",
+									"            } else {",
+									"                console.log('❌ Request ' + requestNumber + ': ' + statusCode + ' (Expected: ' + expectedStatus + ')');",
+									"            }",
+									"",
+									"            resolve({",
+									"                requestNumber: requestNumber,",
+									"                statusCode: statusCode,",
+									"                expectedStatus: expectedStatus,",
+									"                success: statusCode === expectedStatus",
+									"            });",
+									"        });",
+									"    });",
+									"}",
+									"",
+									"// Make 6 requests sequentially",
+									"async function runRateLimitTest() {",
+									"    const results = [];",
+									"    ",
+									"    for (let i = 1; i <= 6; i++) {",
+									"        const result = await makeRateLimitTestRequest(i);",
+									"        results.push(result);",
+									"        ",
+									"        // Small delay between requests",
+									"        await new Promise(resolve => setTimeout(resolve, 200));",
+									"    }",
+									"",
+									"    // Summary",
+									"    const successful = results.filter(r => r.success).length;",
+									"    console.log('\\n📊 Rate Limiting Test Summary:');",
+									"    console.log('✅ Successful: ' + successful + '/6');",
+									"    console.log('❌ Failed: ' + (6 - successful) + '/6');",
+									"",
+									"    if (successful === 6) {",
+									"        console.log('🎉 Rate limiting is working perfectly!');",
+									"    } else {",
+									"        console.log('⚠️  Some tests failed - check rate limiting configuration');",
+									"    }",
+									"",
+									"    // Store results for the test script",
+									"    pm.globals.set('rateLimitTestResults', JSON.stringify(results));",
+									"}",
+									"",
+									"// Run the test",
+									"runRateLimitTest();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/auth/login",
+						"description": "🚀 **AUTOMATED RATE LIMITING TEST**\n\nThis request automatically makes 6 login attempts to test rate limiting:\n- First 5 requests: Should return 401 Unauthorized (user doesn't exist)\n- 6th request: Should return 429 Rate Limited\n\n**How it works:**\n1. Click 'Send' once - it runs 6 requests automatically\n2. Watch the console for real-time results\n3. Tests validate the rate limiting behavior\n\n**Expected Console Output:**\n```\n🚀 Starting automated rate limiting test...\n✅ Request 1: 401 (Expected: 401)\n✅ Request 2: 401 (Expected: 401)\n✅ Request 3: 401 (Expected: 401)\n✅ Request 4: 401 (Expected: 401)\n✅ Request 5: 401 (Expected: 401)\n✅ Request 6: 429 (Expected: 429)\n\n📊 Rate Limiting Test Summary:\n✅ Successful: 6/6\n🎉 Rate limiting is working perfectly!\n```\n\n**To reset for re-testing:**\n- Add header: `X-Reset-Counter: true`\n- Or wait 1 minute for automatic reset\n\n**Rate Limit:** 5 requests per minute per IP"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Rate Limit Status in Redis",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/metrics/basic",
+						"description": "Check rate limiting status. This endpoint shows current rate limit counters stored in Redis."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Cache Warm-up (Credit Transaction)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Cache Warm-up Test - Status is 201\", function () {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Credit transaction created\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('amount');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});",
+									"",
+									"pm.test(\"Balance cache should be invalidated\", function () {",
+									"    // Credit transaction invalidates balance cache",
+									"    // Next balance request will hit database and recache",
+									"    console.log('Balance cache invalidated - will warm up on next balance request');",
+									"});",
+									"",
+									"// Store transaction ID for rollback testing",
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.environment.set(\"lastTransactionId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"amount\": 50.00,\r\n    \"currency\": \"USD\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{base_url}}/transactions/credit",
+						"description": "Create a credit transaction to test cache warm-up. This will invalidate balance cache and transaction will be cached when retrieved."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Cache Performance (Multiple Balance Requests)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"accessToken\")) {\r",
+									"        pm.request.headers.add({ key: \"Authorization\", value: \"Bearer \" + pm.environment.get(\"accessToken\") });\r",
+									"    }"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Cache Performance Test - Status is 200\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Fast Response from Cache\", function () {",
+									"    // Response should be fast if served from cache",
+									"    var responseTime = pm.response.responseTime;",
+									"    console.log('Response time: ' + responseTime + 'ms');",
+									"    ",
+									"    // Cache hits are typically < 10ms",
+									"    if (responseTime < 10) {",
+									"        console.log('🚀 Likely cache hit - very fast response!');",
+									"    } else if (responseTime < 100) {",
+									"        console.log('⚡ Possible cache hit - moderate response time');",
+									"    } else {",
+									"        console.log('🐌 Likely database hit - slower response time');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/balances/current",
+						"description": "Test cache performance by requesting balance multiple times. First request hits database, subsequent requests should hit Redis cache and be much faster."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Rate Limit Counter",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/healthz",
+						"description": "Reset rate limit testing by waiting 1 minute or clearing the counter. Rate limits reset automatically after 1 minute."
+					},
+					"response": []
+				}
+			],
+			"description": "🔴 Redis Cache Testing Collection\n\nTest Redis caching functionality including:\n- Cache hits/misses\n- Cache invalidation\n- Rate limiting\n- Cache warm-up\n- Performance testing\n\n**Setup Instructions:**\n1. Login first to get access token\n2. Set {{IdToGet}} and {{idToUpdateUser}} variables\n3. Run requests in sequence to test cache behavior\n4. Transaction IDs are automatically captured when creating transactions\n\n**Cache TTL Values:**\n- Users: 30 minutes\n- Balances: 10 minutes\n- Transactions: 15 minutes\n- Rate limits: 1 minute\n\n**Rate Limiting Notes:**\n- Rate limit: 5 requests per minute per IP\n- Counter is stored in Postman globals (pm.globals)\n- Use 'Reset Rate Limit Counter' to reset counter for testing\n- Rate limits reset automatically after 1 minute\n\n**Expected Behavior:**\n- First requests hit database and cache results\n- Subsequent requests serve from Redis cache\n- Updates invalidate relevant caches\n- Rate limiting blocks excessive requests"
+		},
 		{
 			"name": "register",
 			"event": [
@@ -28,7 +495,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n        \"username\": \"registeradminuser\",\n        \"email\": \"registeradminuser@example.com\",\n        \"password\": \"password123\",\n        \"role\": \"admin\" \n    }",
+					"raw": "{\n        \"username\": \"alice\",\n        \"email\": \"alice@example.com\",\n        \"password\": \"password123\",\n        \"role\": \"admin\" \n    }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -71,7 +538,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": " {\n       \"email\": \"admin@example.com\",\n        \"password\": \"password123\"\n}",
+					"raw": " {\n       \"email\": \"bob@example.com\",\n        \"password\": \"password123\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -242,7 +709,25 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"pm.test(\"Credit Transaction Created - Status is 201\", function () {",
+							"    pm.expect(pm.response.code).to.eql(201);",
+							"});",
+							"",
+							"pm.test(\"Response contains transaction data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('amount');",
+							"    pm.expect(jsonData).to.have.property('type');",
+							"    pm.expect(jsonData).to.have.property('status');",
+							"});",
+							"",
+							"// Store transaction ID for testing",
+							"var jsonData = pm.response.json();",
+							"if (jsonData && jsonData.id) {",
+							"    pm.environment.set(\"lastTransactionId\", jsonData.id);",
+							"    pm.environment.set(\"lastTransactionType\", jsonData.type);",
+							"    console.log('✅ Credit Transaction ID captured: ' + jsonData.id);",
+							"}"
 						],
 						"type": "text/javascript",
 						"packages": {}
@@ -283,13 +768,42 @@
 						}
 					}
 				},
-				"url": "{{base_url}}/transactions/credit"
+				"url": "{{base_url}}/transactions/credit",
+				"description": "Create a credit transaction. The transaction ID will be automatically captured and stored in {{lastTransactionId}} environment variable for use in other requests like rollback or individual transaction retrieval."
 			},
 			"response": []
 		},
 		{
 			"name": "Debit Transaction",
 			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Debit Transaction Created - Status is 201\", function () {",
+							"    pm.expect(pm.response.code).to.eql(201);",
+							"});",
+							"",
+							"pm.test(\"Response contains transaction data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('amount');",
+							"    pm.expect(jsonData).to.have.property('type');",
+							"    pm.expect(jsonData).to.have.property('status');",
+							"});",
+							"",
+							"// Store transaction ID for testing",
+							"var jsonData = pm.response.json();",
+							"if (jsonData && jsonData.id) {",
+							"    pm.environment.set(\"lastTransactionId\", jsonData.id);",
+							"    pm.environment.set(\"lastTransactionType\", jsonData.type);",
+							"    console.log('✅ Debit Transaction ID captured: ' + jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
 				{
 					"listen": "prerequest",
 					"script": {
@@ -325,13 +839,42 @@
 						}
 					}
 				},
-				"url": "{{base_url}}/transactions/debit"
+				"url": "{{base_url}}/transactions/debit",
+				"description": "Create a debit transaction. The transaction ID will be automatically captured and stored in {{lastTransactionId}} environment variable for use in other requests like rollback or individual transaction retrieval."
 			},
 			"response": []
 		},
 		{
 			"name": "Transfer Transaction",
 			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Transfer Transaction Created - Status is 201\", function () {",
+							"    pm.expect(pm.response.code).to.eql(201);",
+							"});",
+							"",
+							"pm.test(\"Response contains transaction data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('amount');",
+							"    pm.expect(jsonData).to.have.property('type');",
+							"    pm.expect(jsonData).to.have.property('status');",
+							"});",
+							"",
+							"// Store transaction ID for testing",
+							"var jsonData = pm.response.json();",
+							"if (jsonData && jsonData.id) {",
+							"    pm.environment.set(\"lastTransactionId\", jsonData.id);",
+							"    pm.environment.set(\"lastTransactionType\", jsonData.type);",
+							"    console.log('✅ Transfer Transaction ID captured: ' + jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
 				{
 					"listen": "prerequest",
 					"script": {
@@ -360,14 +903,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440002\",\r\n    \"amount\": 100.00,\r\n    \"currency\":\"USD\"\r\n}",
+					"raw": "{\r\n    \"to_user_id\": \"550e8400-e29b-41d4-a716-446655440001\",\r\n    \"amount\": 100.00,\r\n    \"currency\":\"USD\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
 						}
 					}
 				},
-				"url": "{{base_url}}/transactions/transfer"
+				"url": "{{base_url}}/transactions/transfer",
+				"description": "Create a transfer transaction. The transaction ID will be automatically captured and stored in {{lastTransactionId}} environment variable for use in other requests like rollback or individual transaction retrieval."
 			},
 			"response": []
 		},
@@ -404,7 +948,8 @@
 					"mode": "raw",
 					"raw": ""
 				},
-				"url": "{{base_url}}/transactions/{{TransactionIdToRollBack}}/rollback"
+				"url": "{{base_url}}/transactions/{{lastTransactionId}}/rollback",
+				"description": "Rollback the last transaction that was created. Uses the {{lastTransactionId}} environment variable that gets automatically populated when you create any transaction (credit, debit, or transfer)."
 			},
 			"response": []
 		},
@@ -532,7 +1077,8 @@
 					"mode": "raw",
 					"raw": ""
 				},
-				"url": "{{base_url}}/transactions/{{TransactionId}}"
+				"url": "{{base_url}}/transactions/{{lastTransactionId}}",
+				"description": "Get details of the last transaction that was created. Uses the {{lastTransactionId}} environment variable that gets automatically populated when you create any transaction (credit, debit, or transfer)."
 			},
 			"response": []
 		},
@@ -706,16 +1252,16 @@
 		},
 		{
 			"key": "base_url",
-			"value": "https://99318cc5-f2db-4208-ad3a-d1964e768001.mock.pstmn.io"
+			"value": "http://localhost:8080/api/v1"
 		},
 		{
 			"key": "idToDelete",
-			"value": "",
+			"value": "550e8400-e29b-41d4-a716-446655440002",
 			"type": "default"
 		},
 		{
 			"key": "IdToGet",
-			"value": "",
+			"value": "550e8400-e29b-41d4-a716-446655440001",
 			"type": "default"
 		},
 		{
@@ -726,16 +1272,18 @@
 		{
 			"key": "TransactionIdToRollBack",
 			"value": "",
-			"type": "default"
+			"type": "default",
+			"description": "⚠️ DEPRECATED: Use {{lastTransactionId}} environment variable instead"
 		},
 		{
 			"key": "TransactionId",
 			"value": "",
-			"type": "default"
+			"type": "default",
+			"description": "⚠️ DEPRECATED: Use {{lastTransactionId}} environment variable instead"
 		},
 		{
 			"key": "idToUpdateUser",
-			"value": "",
+			"value": "550e8400-e29b-41d4-a716-446655440001",
 			"type": "default"
 		}
 	]

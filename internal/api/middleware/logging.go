@@ -3,12 +3,13 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sefa-b/go-banking-sim/internal/utils"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // contextKey represents a context key type
@@ -80,23 +81,31 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// TracingMiddleware adds distributed tracing support with trace ID in headers.
-func TracingMiddleware(_ string) func(http.Handler) http.Handler {
+// TracingMiddleware adds distributed tracing support with span creation and trace ID in headers.
+func TracingMiddleware(serviceName string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get current span context
+			// Create a new span for this request
 			ctx := r.Context()
-			span := trace.SpanFromContext(ctx)
+			tracer := utils.GetTracer(serviceName)
+			ctx, span := tracer.Start(ctx, fmt.Sprintf("%s %s", r.Method, r.URL.Path))
+			defer span.End()
+
+			// Add request information to the span
+			span.SetAttributes(
+				attribute.String("http.method", r.Method),
+				attribute.String("http.url", r.URL.String()),
+				attribute.String("http.user_agent", r.Header.Get("User-Agent")),
+				attribute.String("http.remote_addr", r.RemoteAddr),
+			)
 
 			// Add trace ID to response headers for debugging
-			if span != nil {
-				traceID := span.SpanContext().TraceID().String()
-				if traceID != "" {
-					w.Header().Set("X-Trace-ID", traceID)
-				}
+			traceID := span.SpanContext().TraceID().String()
+			if traceID != "" {
+				w.Header().Set("X-Trace-ID", traceID)
 			}
 
-			// Call next handler
+			// Call next handler with the span context
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
