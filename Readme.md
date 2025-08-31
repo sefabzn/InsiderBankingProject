@@ -51,7 +51,6 @@ cp .env.example .env  # If you have this file
 
 ### Step 3: Launch All Services
 ```bash
-docker compose -f docker-compose.dev.yml build
 # Start all services (PostgreSQL, Redis, App, Nginx, Monitoring)
 docker compose -f docker-compose.dev.yml up -d
 ```
